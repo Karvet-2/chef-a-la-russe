@@ -1,4 +1,5 @@
-FROM node:20-alpine AS builder
+# Образ с AWS Public ECR — без лимита Docker Hub (429) при анонимном pull
+FROM public.ecr.aws/docker/library/node:20-alpine AS builder
 
 WORKDIR /repo
 
@@ -11,7 +12,7 @@ RUN npm ci
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:20-alpine AS runner
+FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
 WORKDIR /repo
 
