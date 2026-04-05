@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import { useAuth } from '@/contexts/AuthContext'
@@ -22,7 +22,7 @@ interface DocumentWithUser {
   }
 }
 
-export default function DocumentsViewPage() {
+function DocumentsViewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const userId = searchParams.get('userId')
@@ -552,5 +552,19 @@ export default function DocumentsViewPage() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function DocumentsViewPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <p>Загрузка...</p>
+        </div>
+      }
+    >
+      <DocumentsViewPageContent />
+    </Suspense>
   )
 }
