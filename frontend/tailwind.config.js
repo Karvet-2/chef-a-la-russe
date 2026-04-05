@@ -1,3 +1,7 @@
+const path = require('path')
+
+const repoRoot = path.join(__dirname, '..')
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -6,9 +10,9 @@ module.exports = {
     './contexts/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    '../app/**/*.{js,ts,jsx,tsx,mdx}',
-    '../components/**/*.{js,ts,jsx,tsx,mdx}',
-    '../lib/**/*.{js,ts,jsx,tsx,mdx}',
+    path.join(repoRoot, 'app', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
+    path.join(repoRoot, 'components', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
+    path.join(repoRoot, 'lib', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
   ],
   theme: {
     screens: {
@@ -26,7 +30,7 @@ module.exports = {
         background: '#FFFFFF',
         lightGray: '#F1F5F9',
         dark: '#0E172A',
-        accent: '#E13W59',
+        accent: '#E13559',
       },
       fontFamily: {
         sans: ['Montserrat', 'sans-serif'],

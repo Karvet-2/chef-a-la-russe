@@ -13,6 +13,9 @@ COPY frontend ./frontend/
 RUN npm install
 RUN npx prisma generate
 RUN npm run build
+# Пустой CSS (ошибка content/purge) ломает внешний вид — падаем на CI/образе, а не на проде
+RUN sh -c 'test -n "$(find /repo/frontend/.next/static/css -name "*.css" -size +512c 2>/dev/null | head -1)"' \
+  || (echo "ERROR: Tailwind/CSS bundle missing or too small; check tailwind content paths" && exit 1)
 
 FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
