@@ -77,7 +77,7 @@ a {
     @apply space-y-4 sm:space-y-5 md:space-y-6;
   }
   .chef-login-submit {
-    @apply w-full flex items-center justify-center gap-3 group;
+    @apply w-full flex items-center justify-center gap-3;
   }
   .chef-login-icon {
     @apply brightness-0 group-hover:invert transition-all;

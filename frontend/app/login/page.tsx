@@ -101,7 +101,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="chef-login-submit"
+              className="group chef-login-submit"
               disabled={loading}
             >
               <img
