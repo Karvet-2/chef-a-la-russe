@@ -1,7 +1,14 @@
 import type { Metadata } from 'next'
 import { Montserrat } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+
+/** В проде при пустом CSS-бандле: JIT в браузере (как в Tailwind Play). Выключить: TAILWIND_PLAY_CDN=0 */
+const useTailwindPlayCdn =
+  process.env.NODE_ENV === 'production' &&
+  process.env.TAILWIND_PLAY_CDN !== '0' &&
+  process.env.TAILWIND_PLAY_CDN !== 'false'
 
 const montserrat = Montserrat({
   subsets: ['latin', 'cyrillic'],
@@ -27,6 +34,12 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={`${montserrat.variable} font-sans`}>
+        {useTailwindPlayCdn ? (
+          <Script
+            src="https://cdn.tailwindcss.com"
+            strategy="beforeInteractive"
+          />
+        ) : null}
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

@@ -15,5 +15,7 @@ services:
       - .env.production
     environment:
       NODE_ENV: production
+      # Пока включено: утилиты Tailwind в браузере, если прод-сборка CSS пустая. Отключить: TAILWIND_PLAY_CDN=0
+      TAILWIND_PLAY_CDN: "1"
     volumes:
       - ./uploads:/repo/uploads

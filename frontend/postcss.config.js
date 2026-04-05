@@ -1,7 +1,10 @@
+const path = require('path')
+
 module.exports = {
   plugins: {
-    // Явный config: './tailwind.config.js' ломал Tailwind (blocklist undefined) при next build
-    tailwindcss: {},
+    tailwindcss: {
+      config: path.join(__dirname, 'tailwind.config.js'),
+    },
     autoprefixer: {},
   },
 }
