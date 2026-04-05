@@ -27,7 +27,10 @@ export default function AdminTeamDetailsPage() {
   const teamId = params.id as string
   const { isAuthenticated, loading, user } = useAuth()
   const [team, setTeam] = useState<TeamData | null>(null)
-  const [teamDocuments, setTeamDocuments] = useState<Array<Document & { user: User }>>([])
+  type DocWithParticipant = Document & {
+    user: Pick<User, 'id' | 'fio' | 'email'>
+  }
+  const [teamDocuments, setTeamDocuments] = useState<DocWithParticipant[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'members' | 'scores' | 'documents'>('members')
   
@@ -55,10 +58,10 @@ export default function AdminTeamDetailsPage() {
       const allDocumentsArrays = await Promise.all(allDocumentsPromises)
       const allDocuments = allDocumentsArrays.flat()
       
-      const filteredDocuments = allDocuments.filter((doc: any) => 
-        memberIds.includes(doc.user?.id)
+      const filteredDocuments = allDocuments.filter((doc): doc is DocWithParticipant =>
+        Boolean(doc.user?.id && memberIds.includes(doc.user.id))
       )
-      
+
       setTeamDocuments(filteredDocuments)
     } catch (error) {
       console.error('Error loading team data:', error)
@@ -330,7 +333,7 @@ export default function AdminTeamDetailsPage() {
                           {doc.name}
                         </h3>
                         <p className="text-[13px] font-medium text-[#71717B] mb-2">
-                          Участник: {(doc as any).user?.fio || 'Неизвестно'}
+                          Участник: {doc.user?.fio || 'Неизвестно'}
                         </p>
                         <p className="text-xs text-[#71717B]">
                           Размер: {(doc.fileSize / 1024).toFixed(2)} KB
