@@ -28,6 +28,9 @@ RUN npm install --omit=dev && npm cache clean --force
 COPY --from=builder /repo/frontend/.next/standalone ./
 COPY --from=builder /repo/frontend/public ./frontend/public
 COPY --from=builder /repo/frontend/.next/static ./frontend/.next/static
+# При cwd=/repo процесс ищет статику в /repo/.next/static — без этого CSS/чанки 404
+COPY --from=builder /repo/frontend/.next/static ./.next/static
+COPY --from=builder /repo/frontend/public ./public
 
 RUN npx prisma generate
 
