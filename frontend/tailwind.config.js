@@ -1,9 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Все страницы и компоненты: frontend/ и корень репозитория (next build ./frontend + externalDir)
   content: [
-    './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    '../app/**/*.{js,ts,jsx,tsx,mdx}',
+    '../components/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     screens: {
