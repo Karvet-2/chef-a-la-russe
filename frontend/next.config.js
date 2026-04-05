@@ -1,3 +1,5 @@
+const path = require('path')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -5,6 +7,8 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
+  // Монорепо (app/ в корне + frontend/): standalone должен подтянуть все чанки/CSS в образ
+  outputFileTracingRoot: path.join(__dirname, '..'),
   experimental: {
     externalDir: true,
   },
@@ -36,3 +40,4 @@ const nextConfig = {
 }
 
 module.exports = nextConfig
+
