@@ -45,7 +45,7 @@ export default function AdminTeamDetailsPage() {
 
   const loadTeamData = async () => {
     try {
-      const teamData = await api.getOrganizerTeam(teamId)
+      const teamData = (await api.getOrganizerTeam(teamId)) as TeamData
       setTeam(teamData)
       
       const memberIds = teamData.members.map(m => m.user.id)
