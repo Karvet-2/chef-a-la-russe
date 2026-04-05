@@ -93,6 +93,10 @@ certbot --nginx -d chef-a-la-russe.ru -d www.chef-a-la-russe.ru
 
 Дальше откройте в браузере: `https://chef-a-la-russe.ru`
 
+После **certbot** проверьте, что в блоке **`server { listen 443 ssl; ... }`** для прокси на `127.0.0.1:3000` есть те же заголовки, что в `deploy/nginx.chef-a-la-russe.ru.conf` (**`X-Forwarded-Proto`**, **`X-Forwarded-Host`**, **`Host`**). Иначе стили и редиректы могут вести себя странно — при необходимости скопируйте блок `location / { ... }` из актуального файла в репозитории и `nginx -t && systemctl reload nginx`.
+
+**Если интерфейс «голый» (нет Tailwind):** образ должен собираться с актуальным `docker/Dockerfile` (дублирование `.next/static` в корень `/repo`). Пересоберите: `docker compose -f docker-compose.prod.yml build --no-cache && ... up -d`. Проверка с VPS: `docker compose ... exec app ls /repo/.next/static/css` — должны быть `.css` файлы.
+
 Универсальный шаблон без привязки к домену: `deploy/nginx.chef.conf.example`.
 
 ## Обновление версии
