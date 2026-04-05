@@ -239,7 +239,7 @@ export const api = {
 
   async uploadFile(
     dishNumber: number,
-    fileType: 'photo' | 'techCard',
+    fileType: 'photo' | 'techCard' | 'menu',
     file: File
   ): Promise<Upload> {
     const formData = new FormData()
