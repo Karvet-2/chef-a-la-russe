@@ -99,10 +99,23 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(document)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload document error:', error)
+    const err = error as NodeJS.ErrnoException
+    if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+      return NextResponse.json(
+        {
+          error:
+            'Нет прав на запись в каталог загрузок. На VPS: sudo chown -R 1001:1001 uploads && sudo chmod -R u+rwX uploads (из каталога проекта).',
+        },
+        { status: 503 }
+      )
+    }
+    if (err?.code === 'ENOSPC') {
+      return NextResponse.json({ error: 'Недостаточно места на диске' }, { status: 507 })
+    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

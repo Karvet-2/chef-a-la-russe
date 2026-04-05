@@ -97,10 +97,20 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(upload)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload file error:', error)
+    const err = error as NodeJS.ErrnoException
+    if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+      return NextResponse.json(
+        {
+          error:
+            'Нет прав на запись в каталог загрузок. На VPS: sudo chown -R 1001:1001 uploads && sudo chmod -R u+rwX uploads',
+        },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

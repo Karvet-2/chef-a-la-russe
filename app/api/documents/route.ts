@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/middleware'
 import { writeFile, mkdir, unlink } from 'fs/promises'
 import { join } from 'path'
+import { getUploadsRoot } from '@backend/lib/upload-paths'
 
-const UPLOAD_DIR = join(process.cwd(), 'uploads', 'documents')
+const UPLOAD_DIR = join(getUploadsRoot(), 'documents')
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   passport: 'Паспорт',
   medbook: 'Медицинская книжка',
@@ -98,10 +99,20 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(document)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Upload document error:', error)
+    const err = error as NodeJS.ErrnoException
+    if (err?.code === 'EACCES' || err?.code === 'EPERM') {
+      return NextResponse.json(
+        {
+          error:
+            'Нет прав на запись в каталог загрузок. На VPS: sudo chown -R 1001:1001 uploads && sudo chmod -R u+rwX uploads',
+        },
+        { status: 503 }
+      )
+    }
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     )
   }

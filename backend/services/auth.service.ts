@@ -46,7 +46,7 @@ export async function requestPasswordReset(email: string) {
     where: { email: { equals: trimmed, mode: 'insensitive' } },
   })
   if (!user) {
-    return { ok: true as const, token: null as string | null }
+    return { ok: true as const, token: null, email: null }
   }
 
   const token = crypto.randomBytes(32).toString('hex')
@@ -60,7 +60,7 @@ export async function requestPasswordReset(email: string) {
     },
   })
 
-  return { ok: true as const, token, userId: user.id }
+  return { ok: true as const, token, userId: user.id, email: user.email }
 }
 
 export async function resetPasswordWithToken(token: string, newPassword: string) {

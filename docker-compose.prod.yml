@@ -15,6 +15,8 @@ services:
       - .env.production
     environment:
       NODE_ENV: production
+      # Явный путь к загрузкам в контейнере (совпадает с volume ./uploads:/repo/uploads)
+      UPLOADS_ROOT: /repo/uploads
       # Пока включено: утилиты Tailwind в браузере, если прод-сборка CSS пустая. Отключить: TAILWIND_PLAY_CDN=0
       TAILWIND_PLAY_CDN: "1"
     volumes:
