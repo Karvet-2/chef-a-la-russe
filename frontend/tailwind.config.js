@@ -2,6 +2,9 @@ const path = require('path')
 
 const repoRoot = path.join(__dirname, '..')
 
+/** Пути для fast-glob: в Linux важны `/` и регистр имён каталогов (Components ≠ components). */
+const posix = (...parts) => path.join(...parts).replace(/\\/g, '/')
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -10,9 +13,11 @@ module.exports = {
     './contexts/**/*.{js,ts,jsx,tsx,mdx}',
     './lib/**/*.{js,ts,jsx,tsx,mdx}',
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
-    path.join(repoRoot, 'app', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
-    path.join(repoRoot, 'components', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
-    path.join(repoRoot, 'lib', '**', '*.{js,ts,jsx,tsx,mdx}').replace(/\\/g, '/'),
+    posix(repoRoot, 'app', '**', '*.{js,ts,jsx,tsx,mdx}'),
+    posix(repoRoot, 'components', '**', '*.{js,ts,jsx,tsx,mdx}'),
+    posix(repoRoot, 'contexts', '**', '*.{js,ts,jsx,tsx,mdx}'),
+    posix(repoRoot, 'lib', '**', '*.{js,ts,jsx,tsx,mdx}'),
+    posix(repoRoot, 'pages', '**', '*.{js,ts,jsx,tsx,mdx}'),
   ],
   theme: {
     screens: {
