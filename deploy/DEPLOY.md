@@ -82,4 +82,8 @@ docker compose -f docker-compose.prod.yml up -d
 
 ## Без Docker (PM2)
 
-См. исторические варианты в репозитории; для продакшена удобнее Docker + внешняя БД.
+cd /opt/chef
+git pull
+docker compose -f docker-compose.prod.yml build --no-cache
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml up -d

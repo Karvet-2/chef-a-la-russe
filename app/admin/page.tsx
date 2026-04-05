@@ -97,10 +97,10 @@ export default function AdminHome() {
                 </p>
                 <p className="text-xs text-[#71717B]">
                   В системе пока нет пользователей и команд. Это нормально для новой системы.
-                  Вы можете создать пользователей через страницу <strong>"Пользователи"</strong> или использовать команду:
+                  Вы можете создать пользователей через страницу <strong>«Пользователи»</strong> или использовать команду:
                 </p>
                 <code className="block mt-2 px-3 py-2 bg-white rounded text-xs border border-[#E2E8F0]">
-                  npm run create-admin admin@example.com "Пароль123" "Имя Фамилия"
+                  {`npm run create-admin admin@example.com "Пароль123" "Имя Фамилия"`}
                 </code>
               </div>
             )}

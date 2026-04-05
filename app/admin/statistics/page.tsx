@@ -136,8 +136,13 @@ export default function AdminStatisticsPage() {
                   💡 <strong>Как добавить данные:</strong>
                 </p>
                 <ul className="text-xs text-[#71717B] mt-2 ml-4 list-disc space-y-1">
-                  <li>Перейдите на страницу <strong>"Пользователи"</strong> и создайте пользователей через интерфейс</li>
-                  <li>Или используйте команду: <code className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">npm run create-admin email@example.com "Пароль" "Имя"</code></li>
+                  <li>Перейдите на страницу <strong>«Пользователи»</strong> и создайте пользователей через интерфейс</li>
+                  <li>
+                    Или используйте команду:{' '}
+                    <code className="bg-white px-2 py-1 rounded border border-[#E2E8F0]">
+                      {`npm run create-admin email@example.com "Пароль" "Имя"`}
+                    </code>
+                  </li>
                   <li>Участники могут зарегистрироваться самостоятельно на странице регистрации</li>
                 </ul>
               </div>

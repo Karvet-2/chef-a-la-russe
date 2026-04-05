@@ -6,9 +6,11 @@ WORKDIR /repo
 COPY package.json package-lock.json* ./
 COPY backend ./backend/
 COPY scripts ./scripts/
+COPY app ./app/
 COPY frontend ./frontend/
 
-RUN npm ci
+# npm ci требует полного совпадения lock с package.json; при рассинхроне используйте npm install локально и закоммитьте lock
+RUN npm install
 RUN npx prisma generate
 RUN npm run build
 
@@ -20,7 +22,7 @@ ENV NODE_ENV=production
 
 COPY package.json package-lock.json* ./
 COPY backend ./backend/
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm install --omit=dev && npm cache clean --force
 
 COPY --from=builder /repo/frontend/public ./public
 COPY --from=builder /repo/frontend/.next/standalone ./
