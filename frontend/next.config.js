@@ -7,10 +7,10 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   output: 'standalone',
-  // Монорепо (app/ в корне + frontend/): standalone должен подтянуть все чанки/CSS в образ
-  outputFileTracingRoot: path.join(__dirname, '..'),
   experimental: {
     externalDir: true,
+    // Монорепо: standalone подтягивает чанки/CSS из корня репозитория (Next 14 — только в experimental)
+    outputFileTracingRoot: path.join(__dirname, '..'),
   },
   images: {
     domains: [],
