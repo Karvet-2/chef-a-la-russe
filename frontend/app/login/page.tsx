@@ -46,41 +46,41 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-[1292px] bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8 max-w-[800px] mx-auto">
-          <div className="max-w-[676px] mx-auto">
-          <div className="mb-6 sm:mb-8">
-            <h2 className="text-lg sm:text-xl md:text-[20.3px] font-semibold text-black mb-4 sm:mb-6 text-center">
+    <div className="chef-login-root">
+      <div className="chef-login-card-outer">
+        <div className="chef-login-card-inner">
+          <div className="chef-login-content">
+          <div className="chef-login-header-block">
+            <h2 className="chef-login-title">
               Вход /Регистрация
             </h2>
             
-            <div className="relative bg-[#F1F5F9] rounded-[5px] h-[42px] sm:h-[47px] mb-6 sm:mb-8">
-              <div className="absolute top-[3px] sm:top-[4px] left-[3px] sm:left-[4px] right-[3px] sm:right-[4px] bottom-[3px] sm:bottom-[4px] flex">
+            <div className="chef-login-tabs">
+              <div className="chef-login-tabs-row">
                 <button
                   type="button"
-                  className="flex-1 rounded-[5px] flex items-center justify-center transition-colors bg-white text-black shadow-sm"
+                  className="chef-login-tab-on"
                 >
-                  <span className="text-xs sm:text-sm md:text-[14.93px] font-medium">Вход</span>
+                  <span className="chef-login-tab-label-on">Вход</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push('/register')}
-                  className="flex-1 rounded-[5px] flex items-center justify-center transition-colors text-[#64748B]"
+                  className="chef-login-tab-off"
                 >
-                  <span className="text-xs sm:text-sm md:text-[13.92px] font-medium">Регистрация</span>
+                  <span className="chef-login-tab-label-off">Регистрация</span>
                 </button>
               </div>
             </div>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className="chef-login-error">
+              <p className="chef-login-error-text">{error}</p>
             </div>
           )}
 
-          <form className="space-y-4 sm:space-y-5 md:space-y-6" onSubmit={handleSubmit}>
+          <form className="chef-login-form" onSubmit={handleSubmit}>
             <Input
               label="Email"
               type="email"
@@ -101,7 +101,7 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full flex items-center justify-center gap-3 group"
+              className="chef-login-submit"
               disabled={loading}
             >
               <img
@@ -109,15 +109,15 @@ export default function LoginPage() {
                 alt="Login"
                 width={20}
                 height={20}
-                className="brightness-0 group-hover:invert transition-all"
+                className="chef-login-icon"
               />
               <span>{loading ? 'Вход...' : 'Войти'}</span>
             </Button>
           </form>
 
-          <p className="text-center mt-4 sm:mt-6 text-xs sm:text-sm text-gray-600">
+          <p className="chef-login-footer">
             Нет аккаунта?{' '}
-            <Link href="/register" className="text-[#0F172A] font-semibold">
+            <Link href="/register" className="chef-login-register-link">
               Зарегистрироваться
             </Link>
           </p>

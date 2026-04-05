@@ -29,6 +29,67 @@ a {
   text-decoration: none;
 }
 
+/* Логин: классы через @apply — всегда попадают в CSS при любом content-пути Tailwind (Docker/Linux) */
+@layer components {
+  .chef-login-root {
+    @apply min-h-screen bg-white flex items-center justify-center p-4 sm:p-6 md:p-8;
+  }
+  .chef-login-card-outer {
+    @apply w-full max-w-[1292px] bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10;
+  }
+  .chef-login-card-inner {
+    @apply bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8 max-w-[800px] mx-auto;
+  }
+  .chef-login-content {
+    @apply max-w-[676px] mx-auto;
+  }
+  .chef-login-header-block {
+    @apply mb-6 sm:mb-8;
+  }
+  .chef-login-title {
+    @apply text-lg sm:text-xl md:text-[20.3px] font-semibold text-black mb-4 sm:mb-6 text-center;
+  }
+  .chef-login-tabs {
+    @apply relative bg-[#F1F5F9] rounded-[5px] h-[42px] sm:h-[47px] mb-6 sm:mb-8;
+  }
+  .chef-login-tabs-row {
+    @apply absolute top-[3px] sm:top-[4px] left-[3px] sm:left-[4px] right-[3px] sm:right-[4px] bottom-[3px] sm:bottom-[4px] flex;
+  }
+  .chef-login-tab-on {
+    @apply flex-1 rounded-[5px] flex items-center justify-center transition-colors bg-white text-black shadow-sm;
+  }
+  .chef-login-tab-off {
+    @apply flex-1 rounded-[5px] flex items-center justify-center transition-colors text-[#64748B];
+  }
+  .chef-login-tab-label-on {
+    @apply text-xs sm:text-sm md:text-[14.93px] font-medium;
+  }
+  .chef-login-tab-label-off {
+    @apply text-xs sm:text-sm md:text-[13.92px] font-medium;
+  }
+  .chef-login-error {
+    @apply mb-4 p-3 bg-red-50 border border-red-200 rounded-lg;
+  }
+  .chef-login-error-text {
+    @apply text-sm text-red-600;
+  }
+  .chef-login-form {
+    @apply space-y-4 sm:space-y-5 md:space-y-6;
+  }
+  .chef-login-submit {
+    @apply w-full flex items-center justify-center gap-3 group;
+  }
+  .chef-login-icon {
+    @apply brightness-0 group-hover:invert transition-all;
+  }
+  .chef-login-footer {
+    @apply text-center mt-4 sm:mt-6 text-xs sm:text-sm text-gray-600;
+  }
+  .chef-login-register-link {
+    @apply text-[#0F172A] font-semibold;
+  }
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
