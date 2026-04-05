@@ -24,9 +24,10 @@ COPY package.json package-lock.json* ./
 COPY backend ./backend/
 RUN npm install --omit=dev && npm cache clean --force
 
-COPY --from=builder /repo/frontend/public ./public
+# next build ./frontend кладёт standalone как .next/standalone/frontend/server.js — не в корень
 COPY --from=builder /repo/frontend/.next/standalone ./
-COPY --from=builder /repo/frontend/.next/static ./.next/static
+COPY --from=builder /repo/frontend/public ./frontend/public
+COPY --from=builder /repo/frontend/.next/static ./frontend/.next/static
 
 RUN npx prisma generate
 
@@ -47,4 +48,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 ENTRYPOINT ["/repo/entrypoint.sh"]
-CMD ["node", "server.js"]
+CMD ["node", "frontend/server.js"]
