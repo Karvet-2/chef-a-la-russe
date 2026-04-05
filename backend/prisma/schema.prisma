@@ -21,6 +21,8 @@ model User {
   birthDate   DateTime?
   role        String   @default("participant") // participant, organizer, judge, admin
   status      String   @default("pending") // pending, confirmed
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   

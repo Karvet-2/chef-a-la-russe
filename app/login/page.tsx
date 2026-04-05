@@ -115,6 +115,15 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          <div className="text-center mb-4 sm:mb-6">
+            <Link
+              href="/forgot-password"
+              className="text-sm text-[#64748B] hover:text-[#0F172A] underline underline-offset-2"
+            >
+              Забыли пароль?
+            </Link>
+          </div>
+
           <p className="chef-login-footer">
             Нет аккаунта?{' '}
             <Link href="/register" className="chef-login-register-link">

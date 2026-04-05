@@ -18,12 +18,22 @@ const montserrat = Montserrat({
 })
 
 export const metadata: Metadata = {
-  title: 'Кабинет участника - Цифровая система оценивания кулинарного чемпионата "Chef a la Russe"',
-  description: 'Цифровая система оценивания кулинарного чемпионата "Chef a la Russe"',
+  title: {
+    default: 'Chef a la Russe',
+    template: '%s · Chef a la Russe',
+  },
+  description:
+    'Цифровая система оценивания кулинарного чемпионата Chef a la Russe',
   icons: {
     icon: [{ url: '/logo.svg', type: 'image/svg+xml' }],
     apple: [{ url: '/logo.svg', type: 'image/svg+xml' }],
   },
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#ffffff',
 }
 
 export default function RootLayout({
@@ -33,7 +43,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ru">
-      <body className={`${montserrat.variable} font-sans`}>
+      <body
+        className={`${montserrat.variable} font-sans antialiased min-h-screen bg-white text-slate-900`}
+      >
         {useTailwindPlayCdn ? (
           <Script
             src="https://cdn.tailwindcss.com"
