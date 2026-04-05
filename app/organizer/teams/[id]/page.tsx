@@ -100,7 +100,7 @@ export default function TeamDetailsPage() {
         const teamStage: 'qualifier' | 'final' = teamData?.stage === 'final' ? 'final' : 'qualifier'
         const summaries: JudgeSummary[] = judgesData.map(judge => {
           const judgeResults = (teamData.results || []).filter((r: Result) => r.judgeId === judge.id && (r.stage || 'qualifier') === teamStage)
-          const total = judgeResults.reduce((sum, r) => sum + (r.total || 0), 0)
+          const total = judgeResults.reduce((sum: number, r: Result) => sum + (r.total || 0), 0)
           const average = judgeResults.length > 0 ? total / judgeResults.length : 0
           
           return {
