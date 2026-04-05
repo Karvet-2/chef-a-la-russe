@@ -43,7 +43,10 @@ export default function Input({
   }
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (isCleared && (!value || value.trim() === '') && initialValueRef.current !== '') {
+    const isEmpty =
+      !value ||
+      (typeof value === 'string' && value.trim() === '')
+    if (isCleared && isEmpty && initialValueRef.current !== '') {
       if (onChange) {
         const syntheticEvent = {
           ...e,
