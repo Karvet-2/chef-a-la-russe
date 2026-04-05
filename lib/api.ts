@@ -7,7 +7,7 @@ export interface User {
   organization?: string
   birthDate?: string
   role: 'participant' | 'organizer' | 'admin'
-  status: 'pending' | 'confirmed'
+  status: 'pending' | 'confirmed' | 'rejected'
   createdAt?: string
   updatedAt?: string
 }
