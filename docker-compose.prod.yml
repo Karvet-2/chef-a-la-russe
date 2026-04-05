@@ -1,0 +1,19 @@
+# Продакшен с внешней managed PostgreSQL (Timeweb и т.п.).
+# Скопируйте .env.production.example в корень как .env.production и заполните.
+# Запуск из корня: npm run docker:prod:up
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: chef-championship-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+    volumes:
+      - ./uploads:/repo/uploads
