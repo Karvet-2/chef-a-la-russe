@@ -65,25 +65,41 @@ docker compose -f docker-compose.prod.yml up -d
 
 Приложение слушает **`127.0.0.1:3000`** внутри сервера.
 
-## 6. Nginx и домен
+## 6. Nginx и домен (chef-a-la-russe.ru)
 
-- DNS: **A-запись** домена на IP VPS.
-- Скопируйте пример `deploy/nginx.chef.conf.example` в `/etc/nginx/sites-available/`, замените `server_name`, включите сайт и перезагрузите nginx.
-- SSL: **certbot** (`certbot --nginx`) или сертификат в панели Timeweb.
+**DNS:** у регистратора домена две **A-записи** на **публичный IP VPS**:
+
+- `chef-a-la-russe.ru` → IP VPS  
+- `www.chef-a-la-russe.ru` → IP VPS  
+
+Подождите распространения DNS (обычно до 30 минут).
+
+**Nginx на VPS** (из каталога проекта `/opt/chef` после `git pull`):
+
+```bash
+apt update && apt install -y nginx
+cp /opt/chef/deploy/nginx.chef-a-la-russe.ru.conf /etc/nginx/sites-available/chef.conf
+ln -sf /etc/nginx/sites-available/chef.conf /etc/nginx/sites-enabled/
+rm -f /etc/nginx/sites-enabled/default
+nginx -t && systemctl reload nginx
+```
+
+**HTTPS (Let’s Encrypt):**
+
+```bash
+apt install -y certbot python3-certbot-nginx
+certbot --nginx -d chef-a-la-russe.ru -d www.chef-a-la-russe.ru
+```
+
+Дальше откройте в браузере: `https://chef-a-la-russe.ru`
+
+Универсальный шаблон без привязки к домену: `deploy/nginx.chef.conf.example`.
 
 ## Обновление версии
 
 ```bash
 cd /opt/chef
 git pull
-docker compose -f docker-compose.prod.yml build
-docker compose -f docker-compose.prod.yml up -d
-```
-
-## Без Docker (PM2)
-
-cd /opt/chef
-git pull
 docker compose -f docker-compose.prod.yml build --no-cache
 docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml up -d
+```
