@@ -16,7 +16,13 @@ type CritKey =
   | 'tasteTexture'
 
 interface AvgCriteriaData {
-  [K in CritKey]: { total: string; dishes: string[] }
+  miseEnPlace: { total: string; dishes: string[] }
+  hygieneWaste: { total: string; dishes: string[] }
+  professionalPrep: { total: string; dishes: string[] }
+  innovation: { total: string; dishes: string[] }
+  service: { total: string; dishes: string[] }
+  presentation: { total: string; dishes: string[] }
+  tasteTexture: { total: string; dishes: string[] }
 }
 
 export default function ResultsPage() {
