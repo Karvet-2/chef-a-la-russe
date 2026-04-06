@@ -13,6 +13,7 @@ interface TeamData {
   name: string
   category: string
   coachName?: string | null
+  championshipType?: 'adult' | 'junior'
   status: string
   stage?: 'qualifier' | 'final'
   resultsPublished?: boolean
