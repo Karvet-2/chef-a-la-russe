@@ -17,11 +17,23 @@ RUN npm run build
 RUN sh -c 'test -n "$(find /repo/frontend/.next/static/css -name "*.css" -size +512c 2>/dev/null | head -1)"' \
   || (echo "ERROR: Tailwind/CSS bundle missing or too small; check tailwind content paths" && exit 1)
 
+# Утилиты вне /repo: standalone Next кладёт дерево в WORKDIR и может затирать любые пути под /repo
+RUN mkdir -p /opt/chef && \
+  npx --yes esbuild scripts/create-admin.ts \
+    --bundle --platform=node --format=cjs --packages=external \
+    --outfile=/opt/chef/create-admin.cjs && \
+  npx --yes esbuild scripts/create-organizer.ts \
+    --bundle --platform=node --format=cjs --packages=external \
+    --outfile=/opt/chef/create-organizer.cjs && \
+  test -f /opt/chef/create-admin.cjs && test -f /opt/chef/create-organizer.cjs
+
 FROM public.ecr.aws/docker/library/node:20-alpine AS runner
 
 WORKDIR /repo
 
 ENV NODE_ENV=production
+# Скрипты в /opt/chef (esbuild --packages=external) ищут @prisma/client в /repo/node_modules
+ENV NODE_PATH=/repo/node_modules
 
 COPY package.json package-lock.json* ./
 COPY backend ./backend/
@@ -45,6 +57,10 @@ RUN mkdir -p uploads/documents uploads/violations uploads/files && \
 
 COPY docker/entrypoint.sh /repo/entrypoint.sh
 RUN chmod +x /repo/entrypoint.sh && chown nextjs:nodejs /repo/entrypoint.sh
+
+# Вне /repo — не пересекается с merge standalone
+COPY --from=builder /opt/chef /opt/chef
+RUN chown -R nextjs:nodejs /opt/chef
 
 USER nextjs
 

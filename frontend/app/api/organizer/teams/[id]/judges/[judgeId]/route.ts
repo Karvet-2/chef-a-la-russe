@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { requireRole } from '@backend/lib/middleware'
 
+const LIMITS = {
+  miseEnPlace: [0, 5] as const,
+  hygieneWaste: [0, 10] as const,
+  professionalPrep: [0, 15] as const,
+  innovation: [0, 5] as const,
+  service: [0, 5] as const,
+  presentation: [0, 10] as const,
+  tasteTexture: [0, 50] as const,
+}
+
+type Key = keyof typeof LIMITS
+
+function inRange(v: number, key: Key) {
+  const [min, max] = LIMITS[key]
+  return v >= min && v <= max
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; judgeId: string }> | { id: string; judgeId: string } }
@@ -25,7 +42,7 @@ export async function GET(
       },
       orderBy: {
         dishNumber: 'asc',
-      }
+      },
     })
 
     return NextResponse.json(results)
@@ -48,23 +65,46 @@ export async function POST(
   try {
     const { id: teamId, judgeId } = await Promise.resolve(params)
     const body = await request.json()
-    const { dishNumber, taste, presentation, workSkills, hygiene, miseEnPlace, penalties, stage } = body
+    const {
+      dishNumber,
+      miseEnPlace,
+      hygieneWaste,
+      professionalPrep,
+      innovation,
+      service,
+      presentation,
+      tasteTexture,
+      penalties,
+      stage,
+    } = body
     const stageVal: 'qualifier' | 'final' = ['qualifier', 'final'].includes(stage) ? stage : 'qualifier'
 
     const dishNum = parseInt(dishNumber, 10)
-    const tasteVal = Number(taste)
-    const presentationVal = Number(presentation)
-    const workSkillsVal = Number(workSkills)
-    const hygieneVal = Number(hygiene)
-    const miseEnPlaceVal = Number(miseEnPlace)
+    const vals = {
+      miseEnPlace: Number(miseEnPlace),
+      hygieneWaste: Number(hygieneWaste),
+      professionalPrep: Number(professionalPrep),
+      innovation: Number(innovation),
+      service: Number(service),
+      presentation: Number(presentation),
+      tasteTexture: Number(tasteTexture),
+    }
     const penaltiesVal = Number(penalties) || 0
 
-    if (!dishNum || isNaN(tasteVal) || isNaN(presentationVal) || isNaN(workSkillsVal) ||
-        isNaN(hygieneVal) || isNaN(miseEnPlaceVal)) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      )
+    if (!dishNum || Object.values(vals).some((v) => isNaN(v))) {
+      return NextResponse.json({ error: 'All score fields are required' }, { status: 400 })
+    }
+
+    for (const key of Object.keys(LIMITS) as Key[]) {
+      if (!inRange(vals[key], key)) {
+        return NextResponse.json(
+          { error: `Недопустимое значение для критерия (${key})` },
+          { status: 400 }
+        )
+      }
+    }
+    if (penaltiesVal < 0) {
+      return NextResponse.json({ error: 'Штраф не может быть отрицательным' }, { status: 400 })
     }
 
     const teamData = await prisma.team.findUnique({
@@ -78,14 +118,16 @@ export async function POST(
         { status: 400 }
       )
     }
-    if (tasteVal < 0 || tasteVal > 50 || presentationVal < 0 || presentationVal > 15 || workSkillsVal < 0 || workSkillsVal > 20 || hygieneVal < 0 || hygieneVal > 10 || miseEnPlaceVal < 0 || miseEnPlaceVal > 5 || penaltiesVal < 0) {
-      return NextResponse.json(
-        { error: 'Invalid score range' },
-        { status: 400 }
-      )
-    }
 
-    const total = Math.max(0, tasteVal + presentationVal + workSkillsVal + hygieneVal + miseEnPlaceVal - penaltiesVal)
+    const raw =
+      vals.miseEnPlace +
+      vals.hygieneWaste +
+      vals.professionalPrep +
+      vals.innovation +
+      vals.service +
+      vals.presentation +
+      vals.tasteTexture
+    const total = Math.max(0, Math.min(100, raw - penaltiesVal))
 
     const existing = await prisma.result.findFirst({
       where: { teamId, judgeId, dishNumber: dishNum, stage: stageVal },
@@ -103,35 +145,25 @@ export async function POST(
       )
     }
 
+    const data = {
+      ...vals,
+      penalties: penaltiesVal,
+      total,
+      status: 'draft' as const,
+      stage: stageVal,
+    }
+
     const result = existing
       ? await prisma.result.update({
           where: { id: existing.id },
-          data: {
-            taste: tasteVal,
-            presentation: presentationVal,
-            workSkills: workSkillsVal,
-            hygiene: hygieneVal,
-            miseEnPlace: miseEnPlaceVal,
-            penalties: penaltiesVal,
-            total,
-            status: 'draft',
-            stage: stageVal,
-          },
+          data,
         })
       : await prisma.result.create({
           data: {
             teamId,
             judgeId,
             dishNumber: dishNum,
-            taste: tasteVal,
-            presentation: presentationVal,
-            workSkills: workSkillsVal,
-            hygiene: hygieneVal,
-            miseEnPlace: miseEnPlaceVal,
-            penalties: penaltiesVal,
-            total,
-            status: 'draft',
-            stage: stageVal,
+            ...data,
           },
         })
 

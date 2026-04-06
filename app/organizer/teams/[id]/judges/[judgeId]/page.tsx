@@ -7,8 +7,17 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Result, User, ViolationPhoto, getToken } from '@/lib/api'
 
+type CriterionKey =
+  | 'miseEnPlace'
+  | 'hygieneWaste'
+  | 'professionalPrep'
+  | 'innovation'
+  | 'service'
+  | 'presentation'
+  | 'tasteTexture'
+
 interface CriterionData {
-  key: 'taste' | 'presentation' | 'workSkills' | 'hygiene' | 'miseEnPlace'
+  key: CriterionKey
   title: string
   max: number
 }
@@ -105,15 +114,15 @@ export default function JudgeDetailsPage() {
   const [dataLoading, setDataLoading] = useState(true)
   
   const [formData, setFormData] = useState<{
-    [criterion: string]: {
-      [dishNumber: number]: number
-    }
+    [K in CriterionKey]: { [dishNumber: number]: number }
   }>({
     miseEnPlace: { 1: 0, 2: 0, 3: 0 },
-    hygiene: { 1: 0, 2: 0, 3: 0 },
-    workSkills: { 1: 0, 2: 0, 3: 0 },
+    hygieneWaste: { 1: 0, 2: 0, 3: 0 },
+    professionalPrep: { 1: 0, 2: 0, 3: 0 },
+    innovation: { 1: 0, 2: 0, 3: 0 },
+    service: { 1: 0, 2: 0, 3: 0 },
     presentation: { 1: 0, 2: 0, 3: 0 },
-    taste: { 1: 0, 2: 0, 3: 0 },
+    tasteTexture: { 1: 0, 2: 0, 3: 0 },
   })
   
   const [penalties, setPenalties] = useState<{ [dishNumber: number]: number }>({ 1: 0, 2: 0, 3: 0 })
@@ -173,10 +182,12 @@ export default function JudgeDetailsPage() {
 
       const initialFormData: typeof formData = {
         miseEnPlace: initDishMap(dishCountVal),
-        hygiene: initDishMap(dishCountVal),
-        workSkills: initDishMap(dishCountVal),
+        hygieneWaste: initDishMap(dishCountVal),
+        professionalPrep: initDishMap(dishCountVal),
+        innovation: initDishMap(dishCountVal),
+        service: initDishMap(dishCountVal),
         presentation: initDishMap(dishCountVal),
-        taste: initDishMap(dishCountVal),
+        tasteTexture: initDishMap(dishCountVal),
       }
       
       const initialPenalties: { [dishNumber: number]: number } = initDishMap(dishCountVal)
@@ -185,10 +196,12 @@ export default function JudgeDetailsPage() {
       
       stageResults.forEach((result: Result) => {
         initialFormData.miseEnPlace[result.dishNumber] = result.miseEnPlace
-        initialFormData.hygiene[result.dishNumber] = result.hygiene
-        initialFormData.workSkills[result.dishNumber] = result.workSkills
+        initialFormData.hygieneWaste[result.dishNumber] = result.hygieneWaste
+        initialFormData.professionalPrep[result.dishNumber] = result.professionalPrep
+        initialFormData.innovation[result.dishNumber] = result.innovation
+        initialFormData.service[result.dishNumber] = result.service
         initialFormData.presentation[result.dishNumber] = result.presentation
-        initialFormData.taste[result.dishNumber] = result.taste
+        initialFormData.tasteTexture[result.dishNumber] = result.tasteTexture
         initialPenalties[result.dishNumber] = result.penalties || 0
         
         if (result.violationPhotos && result.violationPhotos.length > 0) {
@@ -248,11 +261,13 @@ export default function JudgeDetailsPage() {
         await api.saveJudgeResult(teamId, judgeId, {
           dishNumber,
           stage,
-          taste: Number(formData.taste[dishNumber]) || 0,
-          presentation: Number(formData.presentation[dishNumber]) || 0,
-          workSkills: Number(formData.workSkills[dishNumber]) || 0,
-          hygiene: Number(formData.hygiene[dishNumber]) || 0,
           miseEnPlace: Number(formData.miseEnPlace[dishNumber]) || 0,
+          hygieneWaste: Number(formData.hygieneWaste[dishNumber]) || 0,
+          professionalPrep: Number(formData.professionalPrep[dishNumber]) || 0,
+          innovation: Number(formData.innovation[dishNumber]) || 0,
+          service: Number(formData.service[dishNumber]) || 0,
+          presentation: Number(formData.presentation[dishNumber]) || 0,
+          tasteTexture: Number(formData.tasteTexture[dishNumber]) || 0,
           penalties: Number(penalties[dishNumber]) || 0,
         })
       }
@@ -297,46 +312,45 @@ export default function JudgeDetailsPage() {
   }
 
   const criteria: CriterionData[] = [
-    { key: 'miseEnPlace', title: 'Mise en place (организация рабочего места)', max: 5 },
-    { key: 'hygiene', title: 'Hygiene & Food waste (гигиена и отходы)', max: 10 },
-    { key: 'workSkills', title: 'Work skills/Techniques/Workflow/Innovation (проф. подготовка)', max: 20 },
-    { key: 'presentation', title: 'Presentation (презентация)', max: 15 },
-    { key: 'taste', title: 'Taste (вкус)', max: 50 },
+    { key: 'miseEnPlace', title: 'Организация рабочего места (mise en place)', max: 5 },
+    { key: 'hygieneWaste', title: 'Гигиена и пищевые отходы', max: 10 },
+    { key: 'professionalPrep', title: 'Правильное профессиональное приготовление', max: 15 },
+    { key: 'innovation', title: 'Инновационность', max: 5 },
+    { key: 'service', title: 'Сервис', max: 5 },
+    { key: 'presentation', title: 'Презентация', max: 10 },
+    { key: 'tasteTexture', title: 'Вкус и текстура', max: 50 },
   ]
 
   const dishNumbers = Array.from({ length: dishCount }, (_, i) => i + 1)
 
-  const getCriterionTotal = (criterionKey: string) => {
+  const getCriterionTotal = (criterionKey: CriterionKey) => {
     return dishNumbers.reduce((sum, d) => sum + (formData[criterionKey][d] || 0), 0)
   }
 
-  const getCriterionMax = (criterionKey: string) => {
-    const criterion = criteria.find(c => c.key === criterionKey)
+  const getCriterionMax = (criterionKey: CriterionKey) => {
+    const criterion = criteria.find((c) => c.key === criterionKey)
     return criterion ? criterion.max * dishCount : 0
   }
 
   const getDishTotal = (dishNumber: number) => {
-    return (
+    const raw =
       formData.miseEnPlace[dishNumber] +
-      formData.hygiene[dishNumber] +
-      formData.workSkills[dishNumber] +
+      formData.hygieneWaste[dishNumber] +
+      formData.professionalPrep[dishNumber] +
+      formData.innovation[dishNumber] +
+      formData.service[dishNumber] +
       formData.presentation[dishNumber] +
-      formData.taste[dishNumber] -
-      (penalties[dishNumber] || 0)
-    )
+      formData.tasteTexture[dishNumber]
+    return Math.max(0, Math.min(100, raw - (penalties[dishNumber] || 0)))
   }
 
-  const getOverallTotal = () => {
-    return dishNumbers.reduce((sum, d) => sum + getDishTotal(d), 0)
-  }
-
+  /** Средний балл по блюдам (макс. 100), а не сумма по всем блюдам */
   const getOverallAverage = () => {
-    const dishTotals = dishNumbers.map(d => getDishTotal(d))
-    const dishesWithValuesCount = dishTotals.filter(d => d > 0).length || dishCount
-    return dishTotals.reduce((sum, v) => sum + v, 0) / dishesWithValuesCount
+    const dishTotals = dishNumbers.map((d) => getDishTotal(d))
+    return dishTotals.reduce((sum, v) => sum + v, 0) / dishCount
   }
 
-  const getProgressPercentage = (criterionKey: string) => {
+  const getProgressPercentage = (criterionKey: CriterionKey) => {
     const total = getCriterionTotal(criterionKey)
     const max = getCriterionMax(criterionKey)
     return max > 0 ? (total / max) * 100 : 0
@@ -472,7 +486,9 @@ export default function JudgeDetailsPage() {
                         Блюдо {d}
                       </th>
                     ))}
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[120px]">Итого</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[120px]">
+                      Σ по блюдам
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -613,17 +629,20 @@ export default function JudgeDetailsPage() {
             </div>
 
             <div className="border-2 border-[#E9EEF4] rounded-[21px] p-6 bg-gray-50">
-              <h3 className="text-[18px] font-semibold text-black mb-4">ИТОГО</h3>
-              <div className="flex items-center justify-between">
-                <div className="flex gap-6">
-                    {dishNumbers.map((d) => (
-                      <div key={d} className="text-sm font-semibold text-black">
-                        Блюдо {d}: {getDishTotal(d)}/100
-                      </div>
-                    ))}
+              <h3 className="text-[18px] font-semibold text-black mb-4">Итог по команде</h3>
+              <p className="text-sm text-[#71717B] mb-3">
+                По регламенту за каждое блюдо — до 100 баллов; итоговый показатель — среднее по блюдам.
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-6">
+                  {dishNumbers.map((d) => (
+                    <div key={d} className="text-sm font-semibold text-black">
+                      Блюдо {d}: {getDishTotal(d).toFixed(1)} / 100
+                    </div>
+                  ))}
                 </div>
-                <div className="text-[18px] font-semibold text-black">
-                    {getOverallTotal()}/{100 * dishCount}
+                <div className="text-[18px] font-semibold text-[#0F172A]">
+                  Средний балл: {getOverallAverage().toFixed(2)} / 100
                 </div>
               </div>
             </div>

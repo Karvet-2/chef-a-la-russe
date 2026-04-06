@@ -93,11 +93,14 @@ model Result {
   judgeId   String
   dishNumber Int
   stage     String   @default("qualifier") // qualifier, final
-  taste     Float
-  presentation Float
-  workSkills Float
-  hygiene   Float
-  miseEnPlace Float
+  /// Регламент Chef a la Russe: сумма критериев по блюду до 100 баллов
+  miseEnPlace       Float // Организация рабочего места — до 5
+  hygieneWaste      Float // Гигиена и пищевые отходы — до 10
+  professionalPrep  Float // Профессиональное приготовление — до 15
+  innovation        Float // Инновационность — до 5
+  service           Float // Сервис — до 5
+  presentation      Float // Презентация — до 10
+  tasteTexture      Float // Вкус и текстура — до 50
   penalties Float   @default(0)
   total     Float
   status    String   @default("draft") // draft, fixed
@@ -112,7 +115,7 @@ model Result {
 model ViolationPhoto {
   id          String   @id @default(cuid())
   resultId    String
-  criterionKey String // taste, presentation, workSkills, hygiene, miseEnPlace
+  criterionKey String // miseEnPlace, hygieneWaste, professionalPrep, innovation, service, presentation, tasteTexture
   fileName    String
   fileSize    Int
   createdAt   DateTime @default(now())

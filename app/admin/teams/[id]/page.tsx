@@ -290,10 +290,10 @@ export default function AdminTeamDetailsPage() {
                             <p className="text-sm font-semibold text-black">
                               Блюдо {result.dishNumber}
                             </p>
-                            <p className="text-xs text-[#71717B] mt-1">
-                              Вкус: {result.taste} | Презентация: {result.presentation} | 
-                              Навыки: {result.workSkills} | Гигиена: {result.hygiene} | 
-                              Организация: {result.miseEnPlace}
+                            <p className="text-xs text-[#71717B] mt-1 leading-relaxed">
+                              Mise: {result.miseEnPlace} | Гигиена: {result.hygieneWaste} | Подготовка:{' '}
+                              {result.professionalPrep} | Инновации: {result.innovation} | Сервис: {result.service} |
+                              Презентация: {result.presentation} | Вкус/текстура: {result.tasteTexture}
                             </p>
                           </div>
                           <div className="text-right">

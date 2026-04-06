@@ -73,11 +73,13 @@ export interface Result {
   dishNumber: number
   stage?: 'qualifier' | 'final'
   status?: 'draft' | 'fixed'
-  taste: number
-  presentation: number
-  workSkills: number
-  hygiene: number
   miseEnPlace: number
+  hygieneWaste: number
+  professionalPrep: number
+  innovation: number
+  service: number
+  presentation: number
+  tasteTexture: number
   penalties: number
   total: number
   violationPhotos?: ViolationPhoto[]
@@ -345,6 +347,34 @@ export const api = {
     return handleResponse<any>(response)
   },
 
+  async updateOrganizerTeam(
+    teamId: string,
+    data: {
+      name?: string
+      category?: string
+      coachName?: string | null
+      championshipType?: 'adult' | 'junior'
+    }
+  ): Promise<any> {
+    const response = await fetch(`/api/organizer/teams/${teamId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(data),
+    })
+    return handleResponse<any>(response)
+  },
+
+  async deleteOrganizerTeam(teamId: string): Promise<void> {
+    const response = await fetch(`/api/organizer/teams/${teamId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+    await handleResponse<void>(response)
+  },
+
   async publishTeamResults(teamId: string, published: boolean): Promise<any> {
     const response = await fetch(`/api/organizer/teams/${teamId}/publish`, {
       method: 'PATCH',
@@ -420,11 +450,13 @@ export const api = {
     data: {
       dishNumber: number
       stage?: 'qualifier' | 'final'
-      taste: number
-      presentation: number
-      workSkills: number
-      hygiene: number
       miseEnPlace: number
+      hygieneWaste: number
+      professionalPrep: number
+      innovation: number
+      service: number
+      presentation: number
+      tasteTexture: number
       penalties?: number
     }
   ): Promise<Result> {

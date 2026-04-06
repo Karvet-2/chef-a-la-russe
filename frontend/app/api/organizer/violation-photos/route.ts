@@ -24,7 +24,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!['taste', 'presentation', 'workSkills', 'hygiene', 'miseEnPlace'].includes(criterionKey)) {
+    const allowed = [
+      'miseEnPlace',
+      'hygieneWaste',
+      'professionalPrep',
+      'innovation',
+      'service',
+      'presentation',
+      'tasteTexture',
+    ]
+    if (!allowed.includes(criterionKey)) {
       return NextResponse.json(
         { error: 'Invalid criterionKey' },
         { status: 400 }

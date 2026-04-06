@@ -6,12 +6,17 @@ import Header from '@/components/layout/Header'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Result, Team } from '@/lib/api'
 
+type CritKey =
+  | 'miseEnPlace'
+  | 'hygieneWaste'
+  | 'professionalPrep'
+  | 'innovation'
+  | 'service'
+  | 'presentation'
+  | 'tasteTexture'
+
 interface AvgCriteriaData {
-  taste: { total: string; dishes: string[] }
-  presentation: { total: string; dishes: string[] }
-  workSkills: { total: string; dishes: string[] }
-  hygiene: { total: string; dishes: string[] }
-  miseEnPlace: { total: string; dishes: string[] }
+  [K in CritKey]: { total: string; dishes: string[] }
 }
 
 export default function ResultsPage() {
@@ -81,31 +86,50 @@ export default function ResultsPage() {
   const computeAverageCriteria = (results: Result[], dishCount: number): AvgCriteriaData => {
     const byDish: { [d: number]: Result[] } = {}
     for (let d = 1; d <= dishCount; d++) byDish[d] = []
-    results.forEach(r => {
+    results.forEach((r) => {
       if (byDish[r.dishNumber]) byDish[r.dishNumber].push(r)
     })
-    const keys = ['taste', 'presentation', 'workSkills', 'hygiene', 'miseEnPlace'] as const
-    const maxes = { taste: 50, presentation: 15, workSkills: 20, hygiene: 10, miseEnPlace: 5 }
-    const criteria: AvgCriteriaData = {
-      taste: { total: '', dishes: [] },
-      presentation: { total: '', dishes: [] },
-      workSkills: { total: '', dishes: [] },
-      hygiene: { total: '', dishes: [] },
-      miseEnPlace: { total: '', dishes: [] },
+    const keys: CritKey[] = [
+      'miseEnPlace',
+      'hygieneWaste',
+      'professionalPrep',
+      'innovation',
+      'service',
+      'presentation',
+      'tasteTexture',
+    ]
+    const maxes: Record<CritKey, number> = {
+      miseEnPlace: 5,
+      hygieneWaste: 10,
+      professionalPrep: 15,
+      innovation: 5,
+      service: 5,
+      presentation: 10,
+      tasteTexture: 50,
     }
-    keys.forEach(key => {
-      const dishes: number[] = []
-      let sumTotal = 0
+    const criteria: AvgCriteriaData = {
+      miseEnPlace: { total: '', dishes: [] },
+      hygieneWaste: { total: '', dishes: [] },
+      professionalPrep: { total: '', dishes: [] },
+      innovation: { total: '', dishes: [] },
+      service: { total: '', dishes: [] },
+      presentation: { total: '', dishes: [] },
+      tasteTexture: { total: '', dishes: [] },
+    }
+    keys.forEach((key) => {
+      const dishAvgs: number[] = []
       for (let d = 1; d <= dishCount; d++) {
         const arr = byDish[d]
-        const avg = arr.length ? arr.reduce((s, r) => s + (r[key] || 0), 0) / arr.length : 0
-        dishes.push(avg)
-        sumTotal += avg
+        const avg = arr.length
+          ? arr.reduce((s, r) => s + (Number((r as any)[key]) || 0), 0) / arr.length
+          : 0
+        dishAvgs.push(avg)
       }
-      const max = maxes[key] * dishCount
+      const meanAcrossDishes =
+        dishAvgs.length > 0 ? dishAvgs.reduce((a, b) => a + b, 0) / dishCount : 0
       criteria[key] = {
-        dishes: dishes.map(v => `${v.toFixed(1)} / ${maxes[key]}`),
-        total: `${sumTotal.toFixed(1)} / ${max}`
+        dishes: dishAvgs.map((v) => `${v.toFixed(1)} / ${maxes[key]}`),
+        total: `${meanAcrossDishes.toFixed(1)} / ${maxes[key]}`,
       }
     })
     return criteria
@@ -130,9 +154,7 @@ export default function ResultsPage() {
     return judgeAverages.reduce((sum, avg) => sum + avg, 0) / judgeAverages.length
   }
 
-  const calculateTotalPenalties = (results: Result[]) => {
-    return results.reduce((sum, r) => sum + (r.penalties || 0), 0)
-  }
+  const calculateTotalPenalties = (_results: Result[]) => 0
 
   const getProgressPercentage = (score: string) => {
     const [current, max] = score.split(' / ').map(Number)
@@ -161,7 +183,7 @@ export default function ResultsPage() {
 
   const averageScore = calculateAverageScore(activeResults)
   const totalPenalties = calculateTotalPenalties(activeResults)
-  const finalScore = averageScore - totalPenalties
+  const finalScore = averageScore
 
   const penaltiesList = activeResults
     .filter(r => (r.penalties || 0) > 0)
@@ -355,9 +377,9 @@ export default function ResultsPage() {
                     </div>
                     <div className="bg-white border border-[#E3E9F0] rounded-[19px] p-3 sm:p-4">
                       <p className="text-[14.33px] font-medium text-[#71717B] mb-2">
-                        Max за {dishCount} блюдо
+                        Итог (среднее по блюдам и судьям)
                       </p>
-                      <p className="text-[22.36px] font-semibold text-black">{100 * dishCount}</p>
+                      <p className="text-[22.36px] font-semibold text-black">100</p>
                     </div>
                   </div>
                 </div>
@@ -386,15 +408,17 @@ export default function ResultsPage() {
                         </div>
                       ))}
                       <div className="text-center">
-                        <p className="text-[13.71px] font-semibold text-[#71717B]">Итого</p>
+                        <p className="text-[13.71px] font-semibold text-[#71717B]">Среднее</p>
                       </div>
                     </div>
                     {[
-                      { key: 'miseEnPlace' as const, title: 'Mise en place (организация рабочего места)', max: 5 },
-                      { key: 'hygiene' as const, title: 'Hygiene & Food waste (гигиена и отходы)', max: 10 },
-                      { key: 'workSkills' as const, title: 'Work skills/Techniques/Workflow/Innovation (проф. подготовка)', max: 20 },
-                      { key: 'presentation' as const, title: 'Presentation (презентация)', max: 15 },
-                      { key: 'taste' as const, title: 'Taste (вкус)', max: 50 },
+                      { key: 'miseEnPlace' as CritKey, title: 'Организация рабочего места (mise en place)', max: 5 },
+                      { key: 'hygieneWaste' as CritKey, title: 'Гигиена и пищевые отходы', max: 10 },
+                      { key: 'professionalPrep' as CritKey, title: 'Правильное профессиональное приготовление', max: 15 },
+                      { key: 'innovation' as CritKey, title: 'Инновационность', max: 5 },
+                      { key: 'service' as CritKey, title: 'Сервис', max: 5 },
+                      { key: 'presentation' as CritKey, title: 'Презентация', max: 10 },
+                      { key: 'tasteTexture' as CritKey, title: 'Вкус и текстура', max: 50 },
                     ].map(({ key, title, max }) => (
                       <div key={key} className="bg-transparent border border-[#E2E8F0] rounded-[19px] p-4 sm:p-5 mb-3 last:mb-0">
                         <div
@@ -462,11 +486,13 @@ export default function ResultsPage() {
                       </div>
                     </div>
                     {[
-                      { key: 'miseEnPlace' as const, title: 'Mise en place (организация рабочего места)', max: 5 },
-                      { key: 'hygiene' as const, title: 'Hygiene & Food waste (гигиена и отходы)', max: 10 },
-                      { key: 'workSkills' as const, title: 'Work skills/Techniques/Workflow/Innovation (проф. подготовка)', max: 20 },
-                      { key: 'presentation' as const, title: 'Presentation (презентация)', max: 15 },
-                      { key: 'taste' as const, title: 'Taste (вкус)', max: 50 },
+                      { key: 'miseEnPlace' as CritKey, title: 'Организация рабочего места (mise en place)', max: 5 },
+                      { key: 'hygieneWaste' as CritKey, title: 'Гигиена и пищевые отходы', max: 10 },
+                      { key: 'professionalPrep' as CritKey, title: 'Правильное профессиональное приготовление', max: 15 },
+                      { key: 'innovation' as CritKey, title: 'Инновационность', max: 5 },
+                      { key: 'service' as CritKey, title: 'Сервис', max: 5 },
+                      { key: 'presentation' as CritKey, title: 'Презентация', max: 10 },
+                      { key: 'tasteTexture' as CritKey, title: 'Вкус и текстура', max: 50 },
                     ].map(({ key, title, max }) => (
                       <div key={key} className="bg-transparent border border-[#E2E8F0] rounded-[19px] p-4 sm:p-5 mb-3 last:mb-0">
                         <div

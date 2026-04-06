@@ -12,6 +12,7 @@ interface TeamData {
   id: string
   name: string
   category: string
+  coachName?: string | null
   status: string
   stage?: 'qualifier' | 'final'
   resultsPublished?: boolean
@@ -52,7 +53,10 @@ export default function TeamDetailsPage() {
   const [stageLoading, setStageLoading] = useState(false)
   const [memberFiles, setMemberFiles] = useState<Record<string, TeamMemberFiles>>({})
   const [filesLoading, setFilesLoading] = useState(false)
-  
+  const [showEditTeam, setShowEditTeam] = useState(false)
+  const [editTeamForm, setEditTeamForm] = useState({ name: '', category: '', coachName: '' })
+  const [teamActionLoading, setTeamActionLoading] = useState(false)
+
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
@@ -223,7 +227,53 @@ export default function TeamDetailsPage() {
     }
   }
 
-  
+  const handleOpenEditTeam = () => {
+    if (!team) return
+    setEditTeamForm({
+      name: team.name,
+      category: team.category,
+      coachName: team.coachName || '',
+    })
+    setShowEditTeam(true)
+  }
+
+  const handleSaveTeamEdit = async () => {
+    if (!teamId) return
+    try {
+      setTeamActionLoading(true)
+      await api.updateOrganizerTeam(teamId, {
+        name: editTeamForm.name.trim(),
+        category: editTeamForm.category.trim(),
+        coachName: editTeamForm.coachName.trim() || null,
+      })
+      setShowEditTeam(false)
+      await loadTeamData()
+    } catch (error: any) {
+      alert(error.message || 'Ошибка сохранения команды')
+    } finally {
+      setTeamActionLoading(false)
+    }
+  }
+
+  const handleDeleteTeam = async () => {
+    if (!teamId) return
+    if (
+      !confirm(
+        'Удалить команду полностью? Будут удалены связи участников и все оценки по этой команде.'
+      )
+    )
+      return
+    try {
+      setTeamActionLoading(true)
+      await api.deleteOrganizerTeam(teamId)
+      router.push('/organizer/teams')
+    } catch (error: any) {
+      alert(error.message || 'Ошибка удаления команды')
+    } finally {
+      setTeamActionLoading(false)
+    }
+  }
+
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -254,6 +304,13 @@ export default function TeamDetailsPage() {
     (p: any) => !memberUserIds.has(p.id)
   )
 
+  const dishCountForTeam =
+    team.championshipType === 'junior'
+      ? 2
+      : team.category && /юниор|junior/i.test(team.category)
+        ? 2
+        : 3
+
   return (
     <div className="min-h-screen">
       <OrganizerHeader />
@@ -273,6 +330,21 @@ export default function TeamDetailsPage() {
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleOpenEditTeam}
+                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+              >
+                Редактировать
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteTeam}
+                disabled={teamActionLoading}
+                className="bg-red-50 hover:bg-red-600 hover:text-white text-red-800 px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors disabled:opacity-50"
+              >
+                Удалить команду
+              </button>
               <button
                 onClick={handleToggleStage}
                 disabled={stageLoading}
@@ -464,12 +536,11 @@ export default function TeamDetailsPage() {
                 Судьи и листы оценивания
               </h2>
               {judgeSummaries.map((judge, index) => {
-                const allDishesEvaluated = judge.results.length === 3
+                const allDishesEvaluated =
+                  judge.results.length >= dishCountForTeam && judge.results.length > 0
                 const isFixed = allDishesEvaluated && judge.results.every((r) => r.status === 'fixed')
-                const totalMax = 300
-                const totalScore = judge.total
-                const averagePercentage = (judge.average).toFixed(2)
-                
+                const averagePercentage = judge.average.toFixed(2)
+
                 return (
                   <div
                     key={judge.judgeId}
@@ -481,7 +552,7 @@ export default function TeamDetailsPage() {
                           {judge.judgeName ? `${judge.judgeName} #${index + 1}` : `Судья #${index + 1}`}
                         </h3>
                         <p className="text-[13px] font-medium text-[#71717B] mb-2">
-                          TOTAL: {totalScore.toFixed(0)}/{totalMax} {averagePercentage}/100
+                          Средний балл по блюдам: {averagePercentage} из 100
                         </p>
                       </div>
                       <div className="flex items-center gap-3">
@@ -519,6 +590,54 @@ export default function TeamDetailsPage() {
         </div>
       </main>
 
+      {showEditTeam && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-[16px] p-6 max-w-md w-full shadow-xl space-y-4">
+            <h3 className="text-lg font-semibold text-black">Редактировать команду</h3>
+            <div>
+              <label className="block text-sm font-medium text-[#71717B] mb-1">Название</label>
+              <input
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                value={editTeamForm.name}
+                onChange={(e) => setEditTeamForm((f) => ({ ...f, name: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#71717B] mb-1">Категория / направление</label>
+              <input
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                value={editTeamForm.category}
+                onChange={(e) => setEditTeamForm((f) => ({ ...f, category: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-[#71717B] mb-1">Тренер (необязательно)</label>
+              <input
+                className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2 text-sm"
+                value={editTeamForm.coachName}
+                onChange={(e) => setEditTeamForm((f) => ({ ...f, coachName: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#F1F5F9] hover:bg-[#E2E8F0]"
+                onClick={() => setShowEditTeam(false)}
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                disabled={teamActionLoading}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-[#0F172A] text-white hover:bg-[#1e293b] disabled:opacity-50"
+                onClick={handleSaveTeamEdit}
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
