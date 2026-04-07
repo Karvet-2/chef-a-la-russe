@@ -60,7 +60,13 @@ export default function RootLayout({
             <div
               className="pointer-events-none fixed right-4 top-4 z-10 h-12 w-36 bg-[url('/logo.svg')] bg-contain bg-no-repeat bg-right opacity-90 sm:right-6 sm:top-6 sm:h-14 sm:w-44 md:h-16 md:w-48"
               aria-hidden="true"
-            />
+            >
+              <img
+                src="/logo.svg"
+                alt=""
+                className="h-full w-full object-contain object-right"
+              />
+            </div>
             {children}
           </div>
         </AuthProvider>
