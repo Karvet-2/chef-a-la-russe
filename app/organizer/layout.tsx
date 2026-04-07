@@ -10,13 +10,5 @@ export default function OrganizerLayout({
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <div className="relative min-h-screen">
-      <div
-        className="bg-organizer-page-pattern pointer-events-none fixed inset-0 -z-10"
-        aria-hidden="true"
-      />
-      {children}
-    </div>
-  )
+  return <>{children}</>
 }

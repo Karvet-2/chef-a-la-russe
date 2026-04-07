@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import AdminNavigation from './AdminNavigation'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -18,19 +19,41 @@ export default function AdminHeader() {
   return (
     <header className="w-full bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-4 sm:py-6 md:py-8">
-        <div className="text-center mb-4 lg:mb-6">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left">
             Панель администратора
           </h1>
+          <Link href="/admin" className="hidden shrink-0 justify-center sm:flex sm:justify-end" aria-label="Chef a la Russe">
+            <img
+              src="/logo.svg"
+              alt=""
+              width={240}
+              height={80}
+              className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
+              style={{ maxHeight: 80, maxWidth: 240 }}
+            />
+          </Link>
         </div>
-        
-        <div className="flex items-center justify-between gap-4">
-          <div className="hidden lg:flex items-center">
-            <AdminNavigation />
+
+        <div className="flex items-center justify-between gap-2 sm:gap-3 w-full min-w-0">
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden pr-1 lg:pr-2">
+            <div className="hidden min-w-0 flex-1 lg:flex">
+              <AdminNavigation />
+            </div>
+            <Link href="/admin" className="flex-shrink-0 lg:hidden" aria-label="На главную панели">
+              <img
+                src="/logo.svg"
+                alt=""
+                width={240}
+                height={80}
+                className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
+                style={{ maxHeight: 80, maxWidth: 240 }}
+              />
+            </Link>
           </div>
-          
-          <div className="hidden lg:flex items-center gap-3 xl:gap-4 ml-auto">
-            <div className="bg-white rounded-[23px] shadow-md px-3 xl:px-6 py-2 xl:py-3 flex items-center gap-2 xl:gap-4">
+
+          <div className="hidden shrink-0 items-center gap-2 lg:flex xl:gap-2.5">
+            <div className="flex items-center gap-2 rounded-[23px] bg-white px-3 py-2 shadow-md xl:gap-3 xl:px-4 xl:py-2.5">
               <img
                 src="/icons/user-icon.png"
                 alt="Admin"
@@ -48,19 +71,32 @@ export default function AdminHeader() {
                 </span>
               </div>
             </div>
-            
-            <button 
+
+            <button
+              type="button"
               onClick={handleLogout}
-              className="bg-[#F1F5F9] rounded-[27px] shadow-md px-3 xl:px-6 py-2 xl:py-3 text-xs xl:text-[14.95px] font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
+              className="bg-[#F1F5F9] rounded-[27px] shadow-md px-3 xl:px-5 py-2 xl:py-3 text-xs xl:text-[14.95px] font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
             >
               Выйти
             </button>
+
+            <Link href="/admin" className="flex shrink-0 items-center pl-0.5" aria-label="Chef a la Russe">
+              <img
+                src="/logo.svg"
+                alt=""
+                width={240}
+                height={80}
+                className="h-20 max-h-20 w-auto max-w-[240px] object-contain object-right"
+                style={{ maxHeight: 80, maxWidth: 240 }}
+              />
+            </Link>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Toggle menu"
+            className="lg:hidden flex-shrink-0 p-2 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Меню"
           >
             <svg
               className="w-6 h-6"
@@ -111,7 +147,8 @@ export default function AdminHeader() {
                 </div>
               </div>
               
-              <button 
+              <button
+                type="button"
                 onClick={handleLogout}
                 className="w-full bg-[#F1F5F9] rounded-[27px] shadow-md px-4 py-3 text-sm font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
               >

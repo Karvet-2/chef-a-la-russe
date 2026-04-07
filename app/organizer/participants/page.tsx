@@ -11,6 +11,13 @@ interface ParticipantWithDocs extends User {
   uploads?: { id: string; dishNumber: number; fileType: string; status: string }[]
 }
 
+function getJudgeLoginLabel(judge: User) {
+  const loginFromEmail = judge.email?.split('@')[0]?.trim()
+  if (loginFromEmail) return loginFromEmail
+  if (judge.fio?.trim()) return judge.fio.trim()
+  return 'Судья'
+}
+
 export default function OrganizerParticipantsPage() {
   const router = useRouter()
   const { isAuthenticated, loading, user } = useAuth()
@@ -216,7 +223,7 @@ export default function OrganizerParticipantsPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {judges.map((judge, index) => (
+                  {judges.map((judge) => (
                     <div
                       key={judge.id}
                       className="bg-white rounded-2xl border border-[#E9EEF4] p-5 shadow-sm"
@@ -224,7 +231,7 @@ export default function OrganizerParticipantsPage() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <h3 className="text-[16px] font-semibold text-black mb-0.5">
-                            Судья #{index + 1}
+                            {getJudgeLoginLabel(judge)}
                           </h3>
                           <p className="text-[13px] text-[#71717B]">Судья</p>
                         </div>

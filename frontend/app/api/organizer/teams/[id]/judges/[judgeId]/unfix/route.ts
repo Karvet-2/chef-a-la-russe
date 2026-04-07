@@ -6,13 +6,22 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; judgeId: string }> | { id: string; judgeId: string } }
 ) {
-  const authResult = await requireRole(request, ['organizer', 'admin'])
+  const authResult = await requireRole(request, ['organizer', 'admin', 'participant'])
   if (authResult.error) return authResult.error
 
   try {
     const resolved = await Promise.resolve(params)
     const teamId = resolved.id
     const judgeId = resolved.judgeId
+    const requester = authResult.user
+    const canEditAny = requester.role === 'organizer' || requester.role === 'admin'
+    if (!canEditAny && requester.id !== judgeId) {
+      return NextResponse.json(
+        { error: 'Forbidden: judge can unfix only own sheet' },
+        { status: 403 }
+      )
+    }
+
     const { searchParams } = new URL(request.url)
     const stage = (searchParams.get('stage') as 'qualifier' | 'final') || 'qualifier'
 

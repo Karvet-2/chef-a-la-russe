@@ -22,6 +22,13 @@ interface CriterionData {
   max: number
 }
 
+function getJudgeLoginLabel(judge?: User | null) {
+  const loginFromEmail = judge?.email?.split('@')[0]?.trim()
+  if (loginFromEmail) return loginFromEmail
+  if (judge?.fio?.trim()) return judge.fio.trim()
+  return 'Судья'
+}
+
 function PhotoImage({ photoId, photoUrls, setPhotoUrls }: { photoId: string, photoUrls: { [key: string]: string }, setPhotoUrls: (fn: (prev: { [key: string]: string }) => { [key: string]: string }) => void }) {
   const [imgSrc, setImgSrc] = useState<string | null>(photoUrls[photoId] || null)
   const [error, setError] = useState(false)
@@ -130,7 +137,6 @@ export default function JudgeDetailsPage() {
   const [violationPhotos, setViolationPhotos] = useState<{ [key: string]: ViolationPhoto[] }>({})
   const [photoUrls, setPhotoUrls] = useState<{ [photoId: string]: string }>({})
   const [isFixed, setIsFixed] = useState(false)
-  const [judgeIndex, setJudgeIndex] = useState(1)
   const [stage, setStage] = useState<'qualifier' | 'final'>('qualifier')
   const [dishCount, setDishCount] = useState(3)
 
@@ -160,8 +166,6 @@ export default function JudgeDetailsPage() {
 
       const foundJudge = judgesData.find((j: User) => j.id === judgeId)
       setJudge(foundJudge || null)
-      const idx = judgesData.findIndex((j: User) => j.id === judgeId) + 1
-      setJudgeIndex(idx > 0 ? idx : 1)
       const stageResults =
         teamStage === 'final'
           ? await api.getJudgeResultsByStage(teamId, judgeId, 'final')
@@ -457,7 +461,7 @@ export default function JudgeDetailsPage() {
                 {team?.name || 'Неизвестно'}
               </h1>
               <p className="text-[#71717B] text-sm">
-                Судья #{judgeIndex}
+                {getJudgeLoginLabel(judge)}
               </p>
             </div>
             <div className="flex flex-col items-end gap-2">

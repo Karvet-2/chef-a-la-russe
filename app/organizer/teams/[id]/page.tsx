@@ -28,6 +28,7 @@ interface TeamData {
 interface JudgeSummary {
   judgeId: string
   judgeName?: string
+  judgeEmail?: string
   total: number
   average: number
   results: Result[]
@@ -36,6 +37,13 @@ interface JudgeSummary {
 interface TeamMemberFiles {
   documents: Array<{ id: string; name: string; fileName: string }>
   uploads: UploadWithUser[]
+}
+
+function getJudgeLoginLabel(judgeName?: string, judgeEmail?: string) {
+  const loginFromEmail = judgeEmail?.split('@')[0]?.trim()
+  if (loginFromEmail) return loginFromEmail
+  if (judgeName?.trim()) return judgeName.trim()
+  return 'Судья'
 }
 
 export default function TeamDetailsPage() {
@@ -111,6 +119,7 @@ export default function TeamDetailsPage() {
           return {
             judgeId: judge.id,
             judgeName: judge.fio,
+            judgeEmail: judge.email,
             total,
             average,
             results: judgeResults,
@@ -536,7 +545,7 @@ export default function TeamDetailsPage() {
               <h2 className="text-lg font-semibold text-black mb-4">
                 Судьи и листы оценивания
               </h2>
-              {judgeSummaries.map((judge, index) => {
+              {judgeSummaries.map((judge) => {
                 const allDishesEvaluated =
                   judge.results.length >= dishCountForTeam && judge.results.length > 0
                 const isFixed = allDishesEvaluated && judge.results.every((r) => r.status === 'fixed')
@@ -550,7 +559,7 @@ export default function TeamDetailsPage() {
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <div>
                         <h3 className="text-[16px] font-semibold text-black mb-1">
-                          {judge.judgeName ? `${judge.judgeName} #${index + 1}` : `Судья #${index + 1}`}
+                          {getJudgeLoginLabel(judge.judgeName, judge.judgeEmail)}
                         </h3>
                         <p className="text-[13px] font-medium text-[#71717B] mb-2">
                           Средний балл по блюдам: {averagePercentage} из 100

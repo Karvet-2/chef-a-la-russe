@@ -52,7 +52,19 @@ export default function RootLayout({
             strategy="beforeInteractive"
           />
         ) : null}
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <div className="relative min-h-screen">
+            <div
+              className="bg-organizer-page-pattern pointer-events-none fixed inset-0 -z-10"
+              aria-hidden="true"
+            />
+            <div
+              className="pointer-events-none fixed right-4 top-4 z-10 h-12 w-36 bg-[url('/logo.svg')] bg-contain bg-no-repeat bg-right opacity-90 sm:right-6 sm:top-6 sm:h-14 sm:w-44 md:h-16 md:w-48"
+              aria-hidden="true"
+            />
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   )

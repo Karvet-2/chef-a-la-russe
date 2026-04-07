@@ -35,6 +35,17 @@ export default function ForgotPasswordPage() {
       <div className="chef-login-card-outer">
         <div className="chef-login-card-inner">
           <div className="chef-login-content max-w-[480px]">
+            <div className="flex justify-center mb-4 sm:mb-5">
+              <Link href="/" className="inline-flex" aria-label="Chef a la Russe">
+                <img
+                  src="/logo.svg"
+                  alt=""
+                  width={240}
+                  height={80}
+                  className="h-16 sm:h-20 w-auto max-w-[240px] object-contain"
+                />
+              </Link>
+            </div>
             <h2 className="chef-login-title mb-6">Сброс пароля</h2>
             <p className="text-sm text-[#64748B] mb-6 text-center">
               Укажите email — мы отправим ссылку для нового пароля (или проверьте лог сервера, если почта не

@@ -10,12 +10,12 @@ export default function Header() {
   const router = useRouter()
   const { user, logout } = useAuth()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  
+
   const handleLogout = () => {
     logout()
     router.push('/login')
   }
-  
+
   const getStatusText = (status?: string) => {
     switch (status) {
       case 'confirmed':
@@ -26,16 +26,44 @@ export default function Header() {
         return 'На проверке'
     }
   }
-  
+
   return (
     <header className="w-full bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-4 sm:py-6 md:py-8">
-        <div className="flex flex-nowrap items-center justify-between gap-3 w-full min-w-0">
-          <div className="hidden lg:flex items-center min-w-0 flex-1">
-            <Navigation />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left">
+            Кабинет участника
+          </h1>
+          <Link href="/" className="hidden shrink-0 justify-center sm:flex sm:justify-end" aria-label="Chef a la Russe">
+            <img
+              src="/logo.svg"
+              alt=""
+              width={240}
+              height={80}
+              className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
+              style={{ maxHeight: 80, maxWidth: 240 }}
+            />
+          </Link>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 sm:gap-3 w-full min-w-0">
+          <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden pr-1 lg:pr-2">
+            <div className="hidden min-w-0 flex-1 lg:flex">
+              <Navigation />
+            </div>
+            <Link href="/" className="flex-shrink-0 lg:hidden" aria-label="На главную">
+              <img
+                src="/logo.svg"
+                alt=""
+                width={240}
+                height={80}
+                className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
+                style={{ maxHeight: 80, maxWidth: 240 }}
+              />
+            </Link>
           </div>
-          
-          <div className="hidden lg:flex items-center gap-3 xl:gap-4 flex-shrink-0">
+
+          <div className="hidden shrink-0 items-center gap-2 lg:flex xl:gap-2.5">
             <Link
               href="/profile"
               className="bg-[#F1F5F9] rounded-[20px] px-3 xl:px-5 py-2 xl:py-3 flex items-center gap-2 xl:gap-3 max-w-[min(14rem,28vw)] hover:bg-[#0F172A] hover:text-white group transition-colors"
@@ -57,19 +85,32 @@ export default function Header() {
                 </span>
               </div>
             </Link>
-            
-            <button 
+
+            <button
+              type="button"
               onClick={handleLogout}
-              className="bg-[#F1F5F9] rounded-[27px] shadow-md px-3 xl:px-6 py-2 xl:py-3 text-xs xl:text-[14.95px] font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
+              className="bg-[#F1F5F9] rounded-[27px] shadow-md px-3 xl:px-5 py-2 xl:py-3 text-xs xl:text-[14.95px] font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
             >
               Выйти
             </button>
+
+            <Link href="/" className="flex shrink-0 items-center pl-0.5" aria-label="Chef a la Russe">
+              <img
+                src="/logo.svg"
+                alt=""
+                width={240}
+                height={80}
+                className="h-20 max-h-20 w-auto max-w-[240px] object-contain object-right"
+                style={{ maxHeight: 80, maxWidth: 240 }}
+              />
+            </Link>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors"
-            aria-label="Toggle menu"
+            className="lg:hidden flex-shrink-0 p-2 rounded-md hover:bg-gray-100 transition-colors"
+            aria-label="Меню"
           >
             <svg
               className="w-6 h-6"
@@ -99,7 +140,7 @@ export default function Header() {
         {isMobileMenuOpen && (
           <div className="lg:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
             <Navigation isMobile={true} onNavigate={() => setIsMobileMenuOpen(false)} />
-            
+
             <div className="mt-4 space-y-3">
               <Link
                 href="/profile"
@@ -123,8 +164,9 @@ export default function Header() {
                   </span>
                 </div>
               </Link>
-              
-              <button 
+
+              <button
+                type="button"
                 onClick={handleLogout}
                 className="w-full bg-[#F1F5F9] rounded-[27px] shadow-md px-4 py-3 text-sm font-semibold text-black hover:bg-[#0F172A] hover:text-white transition-colors"
               >
