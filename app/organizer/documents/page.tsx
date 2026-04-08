@@ -40,7 +40,12 @@ function DocumentsViewPageContent() {
   const [teams, setTeams] = useState<OrganizerTeamRow[]>([])
   const [teamDishUploads, setTeamDishUploads] = useState<UploadWithUser[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState(() => searchParams.get('teamId') || '')
-  const [selectedMemberId, setSelectedMemberId] = useState(() => searchParams.get('userId') || '')
+  /** Участник из URL учитываем только вместе с teamId — иначе фильтр по человеку без команды ломал выдачу «Все команды» */
+  const [selectedMemberId, setSelectedMemberId] = useState(() => {
+    const t = searchParams.get('teamId')
+    const u = searchParams.get('userId')
+    return t && u ? u : ''
+  })
   const [dataLoading, setDataLoading] = useState(true)
   const [batchDownloadingUploads, setBatchDownloadingUploads] = useState(false)
   const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null)
@@ -109,30 +114,46 @@ function DocumentsViewPageContent() {
     }
   }, [loading, isAuthenticated, user, router])
 
-  const refreshDocuments = async () => {
+  const refreshDocuments = useCallback(async () => {
     try {
-      const docs = await api.getParticipantDocuments(
-        selectedMemberId || undefined,
-        selectedTeamId || undefined
-      )
+      const teamId = selectedTeamId || undefined
+      /** Без выбранной команды всегда запрашиваем все личные документы (userId не передаём). */
+      const userId = teamId ? selectedMemberId || undefined : undefined
+      const docs = await api.getParticipantDocuments(userId, teamId)
       setDocuments(docs)
     } catch (error) {
       console.error('Error loading documents:', error)
       setDocuments([])
     }
-  }
+  }, [selectedTeamId, selectedMemberId])
 
   useEffect(() => {
     if (loading || dataLoading) return
     refreshDocuments()
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change
-  }, [selectedTeamId, selectedMemberId, loading, dataLoading])
+  }, [loading, dataLoading, refreshDocuments])
+
+  /** Сброс участника при переключении на «Все команды» (на случай рассинхрона состояния) */
+  useEffect(() => {
+    if (!selectedTeamId && selectedMemberId) {
+      setSelectedMemberId('')
+    }
+  }, [selectedTeamId, selectedMemberId])
 
   useEffect(() => {
     reloadTeamUploads()
   }, [reloadTeamUploads])
 
-  /** После загрузки списка команд: сбросить участника, если он не из выбранной команды */
+  /** Выбранная команда исчезла из списка — сброс фильтров */
+  useEffect(() => {
+    if (!teams.length || !selectedTeamId) return
+    const exists = teams.some((t) => t.id === selectedTeamId)
+    if (!exists) {
+      setSelectedTeamId('')
+      setSelectedMemberId('')
+    }
+  }, [teams, selectedTeamId])
+
+  /** После загрузки списка команд: участник не из состава — сбросить */
   useEffect(() => {
     if (!selectedTeamId || !selectedMemberId || teams.length === 0) return
     const tm = teams.find((t) => t.id === selectedTeamId)
@@ -416,7 +437,7 @@ function DocumentsViewPageContent() {
               Документы участников
             </h1>
             <p className="text-sm text-[#71717B]">
-              Выберите команду — появятся командные материалы (блюда, меню) с кнопкой «Открепить». Вторым фильтром можно сузить личные документы по участнику; для командных файлов фильтр участника лишь меняет порядок (сначала файлы выбранного человека).
+              «Все команды» — все личные документы всех участников. Выберите команду, чтобы увидеть командные материалы (блюда, меню) и сузить личные документы до состава команды; вторым списком — до одного участника.
             </p>
           </div>
 

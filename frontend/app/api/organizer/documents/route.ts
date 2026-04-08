@@ -40,8 +40,9 @@ export async function GET(request: NextRequest) {
       whereClause.userId = userId
     }
 
+    const hasFilter = Object.keys(whereClause).length > 0
     const documents = await prisma.document.findMany({
-      where: whereClause,
+      ...(hasFilter ? { where: whereClause } : {}),
       include: {
         user: {
           select: {
