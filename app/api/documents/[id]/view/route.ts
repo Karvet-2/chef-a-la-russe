@@ -51,17 +51,27 @@ export async function GET(
     try {
       const fileBuffer = await readFile(filePath)
 
-    const ext = document.name.split('.').pop()?.toLowerCase()
+    const extFromStored =
+      document.fileName.includes('.') && document.fileName.length > 0
+        ? document.fileName.split('.').pop()?.toLowerCase()
+        : document.name.split('.').pop()?.toLowerCase()
+    const ext = extFromStored || ''
     let contentType = 'application/octet-stream'
-    
+
     if (ext === 'pdf') {
       contentType = 'application/pdf'
-    } else if (['jpg', 'jpeg'].includes(ext || '')) {
+    } else if (['jpg', 'jpeg'].includes(ext)) {
       contentType = 'image/jpeg'
     } else if (ext === 'png') {
       contentType = 'image/png'
     } else if (ext === 'gif') {
       contentType = 'image/gif'
+    } else if (ext === 'webp') {
+      contentType = 'image/webp'
+    } else if (ext === 'svg') {
+      contentType = 'image/svg+xml'
+    } else if (ext === 'bmp') {
+      contentType = 'image/bmp'
     } else if (ext === 'doc') {
       contentType = 'application/msword'
     } else if (ext === 'docx') {

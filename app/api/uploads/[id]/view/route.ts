@@ -39,12 +39,15 @@ export async function GET(
     const filePath = join(UPLOAD_DIR, upload.fileName)
     const fileBuffer = await readFile(filePath)
 
-    const ext = upload.fileName.split('.').pop()?.toLowerCase()
+    const ext = upload.fileName.split('.').pop()?.toLowerCase() || ''
     let contentType = 'application/octet-stream'
     if (ext === 'pdf') contentType = 'application/pdf'
-    if (['jpg', 'jpeg'].includes(ext || '')) contentType = 'image/jpeg'
+    if (['jpg', 'jpeg'].includes(ext)) contentType = 'image/jpeg'
     if (ext === 'png') contentType = 'image/png'
     if (ext === 'gif') contentType = 'image/gif'
+    if (ext === 'webp') contentType = 'image/webp'
+    if (ext === 'svg') contentType = 'image/svg+xml'
+    if (ext === 'bmp') contentType = 'image/bmp'
     if (ext === 'doc') contentType = 'application/msword'
     if (ext === 'docx') contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 

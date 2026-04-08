@@ -32,6 +32,29 @@ interface OrganizerTeamRow {
   }>
 }
 
+const PREVIEWABLE_EXTENSIONS = [
+  'pdf',
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'bmp',
+  'svg',
+  'doc',
+  'docx',
+]
+
+function extensionFromStoredName(storedName: string) {
+  if (!storedName?.includes('.')) return ''
+  return storedName.split('.').pop()?.toLowerCase() ?? ''
+}
+
+function displayUploadStoredName(storedName: string) {
+  const parts = storedName.split('-')
+  return parts.length > 1 ? parts.slice(1).join('-') : storedName
+}
+
 function DocumentsViewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -66,28 +89,41 @@ function DocumentsViewPageContent() {
     }
   }, [selectedTeamId])
 
+  /** При выборе участника — только его файлы в командных материалах */
+  const teamUploadsFiltered = useMemo(() => {
+    if (!selectedMemberId) return teamDishUploads
+    return teamDishUploads.filter((u) => u.user.id === selectedMemberId)
+  }, [teamDishUploads, selectedMemberId])
+
   const sortedTeamDishUploads = useMemo(() => {
     const typeOrder: Record<string, number> = { menu: 0, techCard: 1, photo: 2 }
-    const list = [...teamDishUploads]
+    const list = [...teamUploadsFiltered]
     list.sort((a, b) => {
-      if (selectedMemberId) {
-        const aMine = a.user.id === selectedMemberId ? 0 : 1
-        const bMine = b.user.id === selectedMemberId ? 0 : 1
-        if (aMine !== bMine) return aMine - bMine
-      }
       if (a.dishNumber !== b.dishNumber) return a.dishNumber - b.dishNumber
       const ta = typeOrder[a.fileType] ?? 9
       const tb = typeOrder[b.fileType] ?? 9
       if (ta !== tb) return ta - tb
+      const fa = displayUploadStoredName(a.fileName).toLowerCase()
+      const fb = displayUploadStoredName(b.fileName).toLowerCase()
+      const byFile = fa.localeCompare(fb, 'ru', { sensitivity: 'base' })
+      if (byFile !== 0) return byFile
       return a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
     })
     return list
-  }, [teamDishUploads, selectedMemberId])
+  }, [teamUploadsFiltered])
 
   const sortedDocuments = useMemo(() => {
     return [...documents].sort((a, b) => {
-      const byName = a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
-      if (byName !== 0) return byName
+      const byUser = a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
+      if (byUser !== 0) return byUser
+      const extA = extensionFromStoredName(a.fileName) || extensionFromStoredName(a.name)
+      const extB = extensionFromStoredName(b.fileName) || extensionFromStoredName(b.name)
+      const byExt = extA.localeCompare(extB, 'ru', { sensitivity: 'base' })
+      if (byExt !== 0) return byExt
+      const keyA = (a.fileName || a.name).toLowerCase()
+      const keyB = (b.fileName || b.name).toLowerCase()
+      const byKey = keyA.localeCompare(keyB, 'ru', { sensitivity: 'base' })
+      if (byKey !== 0) return byKey
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
   }, [documents])
@@ -117,7 +153,7 @@ function DocumentsViewPageContent() {
   const refreshDocuments = useCallback(async () => {
     try {
       const teamId = selectedTeamId || undefined
-      /** Без выбранной команды всегда запрашиваем все личные документы (userId не передаём). */
+      /** Без команды — все файлы из «Документы»; userId только вместе с командой. */
       const userId = teamId ? selectedMemberId || undefined : undefined
       const docs = await api.getParticipantDocuments(userId, teamId)
       setDocuments(docs)
@@ -168,11 +204,6 @@ function DocumentsViewPageContent() {
     const qs = params.toString()
     router.replace(qs ? `/organizer/documents?${qs}` : '/organizer/documents', { scroll: false })
   }, [selectedTeamId, selectedMemberId, router])
-
-  const getDisplayUploadFileName = (storedName: string) => {
-    const parts = storedName.split('-')
-    return parts.length > 1 ? parts.slice(1).join('-') : storedName
-  }
 
   const handleDetachTeamUpload = async (uploadId: string) => {
     if (!confirm('Открепить этот файл от команды? Его можно будет загрузить снова.')) return
@@ -314,11 +345,13 @@ function DocumentsViewPageContent() {
     }
   }
 
-  const canPreviewUpload = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase()
-    return ['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext || '')
-  }
+  const canPreviewUploadFile = (fileName: string) =>
+    PREVIEWABLE_EXTENSIONS.includes(extensionFromStoredName(fileName))
 
+  const canPreviewDocument = (doc: DocumentWithUser) =>
+    PREVIEWABLE_EXTENSIONS.includes(
+      extensionFromStoredName(doc.fileName) || extensionFromStoredName(doc.name)
+    )
 
   const handleDownload = async (doc: DocumentWithUser) => {
     try {
@@ -366,11 +399,6 @@ function DocumentsViewPageContent() {
     } catch (error: any) {
       alert(error.message || 'Ошибка просмотра документа')
     }
-  }
-
-  const canPreview = (fileName: string) => {
-    const ext = fileName.split('.').pop()?.toLowerCase()
-    return ['pdf', 'jpg', 'jpeg', 'png', 'gif'].includes(ext || '')
   }
 
   const formatFileSize = (bytes: number) => {
@@ -437,7 +465,7 @@ function DocumentsViewPageContent() {
               Документы участников
             </h1>
             <p className="text-sm text-[#71717B]">
-              «Все команды» — все личные документы всех участников. Выберите команду, чтобы увидеть командные материалы (блюда, меню) и сузить личные документы до состава команды; вторым списком — до одного участника.
+              «Все команды» — все файлы из раздела «Документы» у всех участников. После выбора команды видны командные материалы (блюда, меню) и файлы из «Документов» по составу. Второй фильтр — только файлы выбранного человека (любые расширения: pdf, png, jpg, docx и т.д.).
             </p>
           </div>
 
@@ -466,7 +494,7 @@ function DocumentsViewPageContent() {
             </div>
             <div className="flex-1 min-w-0">
               <label className="block text-sm font-semibold text-black mb-2">
-                2. Участник (личные документы)
+                2. Участник (все его загрузки)
               </label>
               <select
                 value={selectedMemberId}
@@ -496,7 +524,10 @@ function DocumentsViewPageContent() {
                 <div>
                   <h2 className="text-lg font-semibold text-black">Командные материалы</h2>
                   <p className="text-sm text-[#71717B]">
-                    Фото блюд, технологические карты и меню — общие для команды (загрузки из раздела «Загрузки»)
+                    Фото блюд, ТК и меню (раздел «Загрузки»).
+                    {selectedMemberId
+                      ? ' Показаны только файлы, которые загрузил выбранный участник.'
+                      : ' Общие для команды; выберите участника выше, чтобы оставить только его файлы.'}
                   </p>
                 </div>
                 {sortedTeamDishUploads.length > 0 && (
@@ -531,7 +562,7 @@ function DocumentsViewPageContent() {
                                 : `Блюдо ${u.dishNumber} · Фото`}
                           </p>
                           <p className="text-xs text-[#71717B] mt-1 truncate">
-                            {getDisplayUploadFileName(u.fileName)}
+                            {displayUploadStoredName(u.fileName)}
                           </p>
                           <p className="text-xs text-[#71717B] mt-1">
                             Загрузил: <span className="font-medium text-[#475569]">{u.user.fio}</span>
@@ -541,7 +572,7 @@ function DocumentsViewPageContent() {
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          {canPreviewUpload(u.fileName) && (
+                          {canPreviewUploadFile(u.fileName) && (
                             <button
                               onClick={() => handleViewUpload(u)}
                               className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-3 py-2 rounded-md text-xs font-semibold transition-colors"
@@ -573,9 +604,9 @@ function DocumentsViewPageContent() {
           )}
 
           <div className="mb-4">
-            <h2 className="text-lg font-semibold text-black mb-1">Личные документы участников</h2>
+            <h2 className="text-lg font-semibold text-black mb-1">Файлы из раздела «Документы»</h2>
             <p className="text-sm text-[#71717B] mb-4">
-              Паспорт, медкнижка, согласия и т.д. — привязаны к конкретному участнику. Без выбора команды показываются все; с командой — только её состав; можно сузить до одного человека.
+              Загрузки из личного кабинета (любой допустимый формат). Сортировка: участник → тип файла → имя файла. Кнопка «Просмотр» зависит от реального расширения файла на диске, а не только от названия.
             </p>
           </div>
 
@@ -605,6 +636,9 @@ function DocumentsViewPageContent() {
                         <p className="text-sm sm:text-base md:text-[15.36px] font-medium text-black mb-1 truncate">
                           {doc.name}
                         </p>
+                        <p className="text-[11px] text-[#94a3b8] mb-1 truncate" title={doc.fileName}>
+                          {displayUploadStoredName(doc.fileName)}
+                        </p>
                         <p className="text-xs sm:text-sm md:text-[13.09px] font-medium text-[#71717B] mb-2">
                           Участник: <span className="font-semibold">{doc.user.fio}</span> ({doc.user.email})
                         </p>
@@ -620,7 +654,7 @@ function DocumentsViewPageContent() {
                     </div>
                     <div className="w-full sm:w-auto sm:min-w-[450px]">
                       <div className="grid grid-cols-3 gap-2">
-                        {canPreview(doc.name) ? (
+                        {canPreviewDocument(doc) ? (
                           <button
                             onClick={() => handleView(doc)}
                             className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black h-10 px-3 rounded-md text-sm font-semibold transition-colors flex items-center justify-center gap-2"
