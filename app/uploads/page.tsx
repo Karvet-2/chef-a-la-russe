@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Team, Upload, Document } from '@/lib/api'
+import { activeStageDishCount } from '@backend/lib/dish-count'
 
 export default function UploadsPage() {
   const router = useRouter()
@@ -76,8 +77,7 @@ export default function UploadsPage() {
 
   const getMenuUpload = () => uploads.find((u) => u.fileType === 'menu' && u.dishNumber === 0)
 
-  const dishCount =
-    team?.championshipType === 'junior' ? 2 : (team?.category && /юниор|junior/i.test(team.category) ? 2 : 3)
+  const dishCount = team ? activeStageDishCount(team) : 3
   const dishNumbers = Array.from({ length: dishCount }, (_, i) => i + 1)
 
   const dishes = dishNumbers.map((dishNum) => {

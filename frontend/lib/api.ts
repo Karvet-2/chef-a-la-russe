@@ -327,6 +327,7 @@ export const api = {
     name: string
     category: string
     championshipType?: 'adult' | 'junior'
+    coachName?: string | null
     userIds?: string[]
   }): Promise<Team> {
     const response = await fetch('/api/organizer/teams', {

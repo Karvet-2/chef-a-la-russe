@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation'
 import Header from '@/components/layout/Header'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Result, Team } from '@/lib/api'
+import { qualifierDishCount } from '@backend/lib/dish-count'
+
+const FINAL_DISH_COUNT = 2
 
 type CritKey =
   | 'miseEnPlace'
@@ -72,11 +75,8 @@ export default function ResultsPage() {
           console.error('Error loading ranking:', error)
         }
 
-        const dishCount =
-          teamData?.championshipType === 'junior'
-            ? 2
-            : (teamData?.category && /юниор|junior/i.test(teamData.category) ? 2 : 3)
-        setAvgCriteria(qualifierResults.length > 0 ? computeAverageCriteria(qualifierResults, dishCount) : null)
+        const qDishes = qualifierDishCount(teamData)
+        setAvgCriteria(qualifierResults.length > 0 ? computeAverageCriteria(qualifierResults, qDishes) : null)
       } else {
         setAvgCriteria(null)
       }
@@ -183,9 +183,9 @@ export default function ResultsPage() {
   const qualifierOnly = results.filter(r => (r.stage || 'qualifier') === 'qualifier')
   const finalOnly = results.filter(r => (r.stage || 'qualifier') === 'final')
   const activeResults = qualifierOnly
-  const dishCount =
-    team?.championshipType === 'junior' ? 2 : (team?.category && /юниор|junior/i.test(team.category) ? 2 : 3)
-  const finalAvgCriteria = finalOnly.length > 0 ? computeAverageCriteria(finalOnly, dishCount) : null
+  const qualifierGridDishes = team ? qualifierDishCount(team) : 3
+  const finalAvgCriteria =
+    finalOnly.length > 0 ? computeAverageCriteria(finalOnly, FINAL_DISH_COUNT) : null
 
   const averageScore = calculateAverageScore(activeResults)
   const totalPenalties = calculateTotalPenalties(activeResults)
@@ -401,12 +401,12 @@ export default function ResultsPage() {
                   <div className="border border-[#E2E8F0] rounded-[21px] p-5 sm:p-6 md:p-8 overflow-x-auto">
                     <div
                       className="grid gap-3 sm:gap-4 pb-2 mb-4"
-                      style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(dishCount).trim()} 1fr` }}
+                      style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(qualifierGridDishes).trim()} 1fr` }}
                     >
                       <div className="text-left">
                         <p className="text-[13.71px] font-semibold text-[#71717B]">Критерий</p>
                       </div>
-                      {Array.from({ length: dishCount }, (_, i) => (
+                      {Array.from({ length: qualifierGridDishes }, (_, i) => (
                         <div key={i} className="text-center">
                           <p className="text-[13.71px] font-semibold text-[#71717B]">
                             Блюдо {i + 1}
@@ -429,7 +429,7 @@ export default function ResultsPage() {
                       <div key={key} className="bg-transparent border border-[#E2E8F0] rounded-[19px] p-4 sm:p-5 mb-3 last:mb-0">
                         <div
                           className="grid gap-3 sm:gap-4 place-items-center [&>div:first-child]:place-self-start"
-                          style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(dishCount).trim()} 1fr` }}
+                          style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(qualifierGridDishes).trim()} 1fr` }}
                         >
                           <div>
                             <p className="text-[13.71px] font-semibold text-black mb-1">{title}</p>
@@ -475,12 +475,12 @@ export default function ResultsPage() {
                   <div className="border border-[#E2E8F0] rounded-[21px] p-5 sm:p-6 md:p-8 overflow-x-auto">
                     <div
                       className="grid gap-3 sm:gap-4 pb-2 mb-4"
-                      style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(dishCount).trim()} 1fr` }}
+                      style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(FINAL_DISH_COUNT).trim()} 1fr` }}
                     >
                       <div className="text-left">
                         <p className="text-[13.71px] font-semibold text-[#71717B]">Критерий</p>
                       </div>
-                      {Array.from({ length: dishCount }, (_, i) => (
+                      {Array.from({ length: FINAL_DISH_COUNT }, (_, i) => (
                         <div key={i} className="text-center">
                           <p className="text-[13.71px] font-semibold text-[#71717B]">
                             Блюдо {i + 1}
@@ -503,7 +503,7 @@ export default function ResultsPage() {
                       <div key={key} className="bg-transparent border border-[#E2E8F0] rounded-[19px] p-4 sm:p-5 mb-3 last:mb-0">
                         <div
                           className="grid gap-3 sm:gap-4 place-items-center [&>div:first-child]:place-self-start"
-                          style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(dishCount).trim()} 1fr` }}
+                          style={{ gridTemplateColumns: `2fr ${'1fr '.repeat(FINAL_DISH_COUNT).trim()} 1fr` }}
                         >
                           <div>
                             <p className="text-[13.71px] font-semibold text-black mb-1">{title}</p>

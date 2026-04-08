@@ -73,6 +73,7 @@ export default function AdminTeamsPage() {
       const teamData = {
         name: createFormData.name,
         category: categoryWithType,
+        championshipType: createFormData.championshipType,
         coachName: createFormData.coachName || undefined,
         userIds: createFormData.userIds.length > 0 ? createFormData.userIds : undefined,
       }

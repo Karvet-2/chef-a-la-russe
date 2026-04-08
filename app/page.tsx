@@ -6,6 +6,7 @@ import Header from '@/components/layout/Header'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Team, Upload, Result } from '@/lib/api'
+import { activeStageDishCount } from '@backend/lib/dish-count'
 
 export default function Home() {
   const router = useRouter()
@@ -72,8 +73,7 @@ export default function Home() {
     return uploads.some(u => u.dishNumber === dishNumber && u.fileType === fileType && u.status === 'confirmed')
   }
 
-  const dishCount =
-    team?.championshipType === 'junior' ? 2 : (team?.category && /юниор|junior/i.test(team.category) ? 2 : 3)
+  const dishCount = team ? activeStageDishCount(team) : 3
   const dishNumbers = Array.from({ length: dishCount }, (_, i) => i + 1)
   
   if (loading || dataLoading) {

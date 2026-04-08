@@ -6,6 +6,7 @@ import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api, Result, User, ViolationPhoto, getToken } from '@/lib/api'
+import { activeStageDishCount } from '@backend/lib/dish-count'
 
 type CriterionKey =
   | 'miseEnPlace'
@@ -175,10 +176,7 @@ export default function JudgeDetailsPage() {
           : resultsData
       setResults(stageResults)
       
-      const dishCountVal =
-        teamData?.championshipType === 'junior'
-          ? 2
-          : (teamData?.category && /юниор|junior/i.test(teamData.category) ? 2 : 3)
+      const dishCountVal = activeStageDishCount(teamData)
       setDishCount(dishCountVal)
 
       const initDishMap = (count: number) => {

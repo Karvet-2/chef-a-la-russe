@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
 import { api } from '@/lib/api'
 import { User, Result, UploadWithUser, getToken } from '@/lib/api'
+import { activeStageDishCount } from '@backend/lib/dish-count'
 
 interface TeamData {
   id: string
@@ -335,12 +336,7 @@ export default function TeamDetailsPage() {
     (p: any) => !memberUserIds.has(p.id)
   )
 
-  const dishCountForTeam =
-    team.championshipType === 'junior'
-      ? 2
-      : team.category && /юниор|junior/i.test(team.category)
-        ? 2
-        : 3
+  const dishCountForTeam = activeStageDishCount(team)
 
   return (
     <div className="min-h-screen">

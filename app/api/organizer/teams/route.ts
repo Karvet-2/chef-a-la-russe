@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/middleware'
 
+function resolveChampionshipType(explicit: unknown, category: string): 'adult' | 'junior' {
+  if (explicit === 'junior') return 'junior'
+  if (explicit === 'adult') return 'adult'
+  if (/юниор|junior/i.test(category)) return 'junior'
+  return 'adult'
+}
+
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ['organizer', 'admin'])
   if (authResult.error) return authResult.error
@@ -68,7 +75,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { name, category, coachName, userIds } = body
+    const { name, category, coachName, userIds, championshipType: rawType } = body
 
     if (!name || !category) {
       return NextResponse.json(
@@ -76,6 +83,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const championshipType = resolveChampionshipType(rawType, String(category))
 
     let membersNested: { create: { userId: string; status: string }[] } | undefined
     if (userIds && userIds.length > 0) {
@@ -98,6 +107,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         category,
+        championshipType,
         coachName: coachName || null,
         status: 'confirmed',
         members: membersNested,

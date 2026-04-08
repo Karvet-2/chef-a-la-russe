@@ -13,6 +13,7 @@ interface Team {
   id: string
   name: string
   category: string
+  championshipType?: string
   avgScore?: string
   members?: Array<{ user: { fio: string } }>
 }
@@ -26,6 +27,7 @@ export default function OrganizerTeamsPage() {
   const [createFormData, setCreateFormData] = useState({
     name: '',
     category: '',
+    championshipType: 'adult' as 'adult' | 'junior',
     userIds: [] as string[],
   })
   const [availableParticipants, setAvailableParticipants] = useState<any[]>([])
@@ -71,13 +73,14 @@ export default function OrganizerTeamsPage() {
   const handleCreateTeam = async () => {
     try {
       const teamData = {
-        name: createFormData.name,
-        category: createFormData.category,
+        name: createFormData.name.trim(),
+        category: createFormData.category.trim(),
+        championshipType: createFormData.championshipType,
         userIds: createFormData.userIds.length > 0 ? createFormData.userIds : undefined,
       }
       await api.createTeam(teamData)
       setShowCreateModal(false)
-      setCreateFormData({ name: '', category: '', userIds: [] })
+      setCreateFormData({ name: '', category: '', championshipType: 'adult', userIds: [] })
       loadTeams()
     } catch (error: any) {
       alert(error.message || 'Ошибка создания команды')
@@ -135,6 +138,11 @@ export default function OrganizerTeamsPage() {
                       <h3 className="text-[16px] font-semibold text-black mb-3">
                         {team.name}
                       </h3>
+                      <p className="text-xs font-medium text-[#334155] mb-2">
+                        {team.championshipType === 'junior' || /юниор|junior/i.test(team.category || '')
+                          ? 'Юниорская команда (2 блюда)'
+                          : 'Взрослая команда (3 блюда)'}
+                      </p>
                       <p className="text-[13px] font-medium text-[#71717B]">
                         {team.members && team.members.length > 0
                           ? `Участники: ${team.members.map(m => m.user.fio).join(', ')}`
@@ -200,6 +208,26 @@ export default function OrganizerTeamsPage() {
                 placeholder="Hot Kitchen"
                 required
               />
+
+              <div>
+                <label className="block text-sm font-semibold text-black mb-2">Тип команды</label>
+                <select
+                  value={createFormData.championshipType}
+                  onChange={(e) =>
+                    setCreateFormData({
+                      ...createFormData,
+                      championshipType: e.target.value === 'junior' ? 'junior' : 'adult',
+                    })
+                  }
+                  className="w-full border border-[#E2E8F0] rounded-lg px-3 py-2.5 text-sm bg-white text-black"
+                >
+                  <option value="adult">Взрослая (3 блюда)</option>
+                  <option value="junior">Юниорская (2 блюда)</option>
+                </select>
+                <p className="text-xs text-[#71717B] mt-1.5">
+                  Для юниоров на квалификации и в финале учитываются только два блюда.
+                </p>
+              </div>
               
               <div className="border border-[#E2E8F0] rounded-md p-4">
                 <label className="block text-sm font-semibold text-black mb-3">
@@ -252,7 +280,7 @@ export default function OrganizerTeamsPage() {
                 variant="secondary"
                 onClick={() => {
                   setShowCreateModal(false)
-                  setCreateFormData({ name: '', category: '', userIds: [] })
+                  setCreateFormData({ name: '', category: '', championshipType: 'adult', userIds: [] })
                 }}
                 className="flex-1"
               >

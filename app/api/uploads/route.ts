@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/middleware'
+import { activeStageDishCount } from '@backend/lib/dish-count'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 
@@ -64,9 +65,13 @@ export async function POST(request: NextRequest) {
     if (fileType !== 'menu') {
       const teamMember = await prisma.teamMember.findFirst({
         where: { userId: authResult.user.id },
-        include: { team: { select: { category: true } } },
+        include: { team: { select: { category: true, championshipType: true, stage: true } } },
       })
-      const dishCount = teamMember?.team?.category && /юниор|junior/i.test(teamMember.team.category) ? 2 : 3
+      const t = teamMember?.team
+      if (!t) {
+        return NextResponse.json({ error: 'Team not found' }, { status: 400 })
+      }
+      const dishCount = activeStageDishCount(t)
       if (dishNumber < 1 || dishNumber > dishCount) {
         return NextResponse.json(
           { error: `dishNumber must be 1..${dishCount} for photo/techCard` },

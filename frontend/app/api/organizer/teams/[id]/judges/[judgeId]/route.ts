@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@backend/lib/prisma'
 import { requireRole } from '@backend/lib/middleware'
+import { dishCountForResultStage } from '@backend/lib/dish-count'
 
 const LIMITS = {
   miseEnPlace: [0, 5] as const,
@@ -129,9 +130,12 @@ export async function POST(
 
     const teamData = await prisma.team.findUnique({
       where: { id: teamId },
-      select: { category: true },
+      select: { category: true, championshipType: true },
     })
-    const dishCount = teamData?.category && /юниор|junior/i.test(teamData.category) ? 2 : 3
+    if (!teamData) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 })
+    }
+    const dishCount = dishCountForResultStage(stageVal, teamData)
     if (dishNum < 1 || dishNum > dishCount) {
       return NextResponse.json(
         { error: `dishNumber must be 1..${dishCount}` },
