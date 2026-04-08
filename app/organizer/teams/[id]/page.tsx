@@ -46,6 +46,27 @@ function getJudgeLoginLabel(judgeName?: string, judgeEmail?: string) {
   return 'Судья'
 }
 
+function judgeSummarySortKey(s: JudgeSummary): string {
+  const fio = s.judgeName?.trim()
+  if (fio) return fio.toLocaleLowerCase()
+  return (s.judgeEmail?.split('@')[0]?.trim() || '').toLocaleLowerCase()
+}
+
+/** Текущий судья — первый в списке, остальные по ФИО */
+function sortJudgeSummariesForViewer(
+  summaries: JudgeSummary[],
+  currentUserId?: string | null
+): JudgeSummary[] {
+  return [...summaries].sort((a, b) => {
+    if (currentUserId) {
+      const aMine = a.judgeId === currentUserId
+      const bMine = b.judgeId === currentUserId
+      if (aMine !== bMine) return aMine ? -1 : 1
+    }
+    return judgeSummarySortKey(a).localeCompare(judgeSummarySortKey(b), 'ru', { sensitivity: 'base' })
+  })
+}
+
 export default function TeamDetailsPage() {
   const router = useRouter()
   const params = useParams()
@@ -125,8 +146,8 @@ export default function TeamDetailsPage() {
             results: judgeResults,
           }
         })
-        
-        setJudgeSummaries(summaries)
+
+        setJudgeSummaries(sortJudgeSummariesForViewer(summaries, user?.id))
       } else {
         setJudgeSummaries([])
       }
