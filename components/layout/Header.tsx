@@ -29,8 +29,8 @@ export default function Header() {
   
   return (
     <header className="w-full bg-white">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-4 sm:py-6 md:py-8">
-        <div className="mb-4 lg:mb-6">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-3 sm:py-4 md:py-5">
+        <div className="mb-2 lg:mb-3">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left">
             Кабинет участника
           </h1>
@@ -90,8 +90,8 @@ export default function Header() {
                 alt=""
                 width={240}
                 height={80}
-                className="h-20 max-h-20 w-auto max-w-[240px] object-contain object-right"
-                style={{ maxHeight: 80, maxWidth: 240 }}
+                className="h-14 max-h-14 w-auto max-w-[160px] object-contain object-right"
+                style={{ maxHeight: 56, maxWidth: 160 }}
               />
             </Link>
           </div>

@@ -25,7 +25,7 @@ export default function OrganizerHeader() {
   
   return (
     <header className="w-full bg-white">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-4 sm:py-6 md:py-8">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-3 sm:py-4 md:py-5">
         <div className="flex items-center justify-between gap-2 sm:gap-3 w-full min-w-0">
           <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden pr-1 lg:pr-2">
             <div className="hidden min-w-0 flex-1 lg:flex">
@@ -82,8 +82,8 @@ export default function OrganizerHeader() {
                 alt=""
                 width={240}
                 height={80}
-                className="h-20 max-h-20 w-auto max-w-[240px] object-contain object-right"
-                style={{ maxHeight: 80, maxWidth: 240 }}
+                className="h-14 max-h-14 w-auto max-w-[160px] object-contain object-right"
+                style={{ maxHeight: 56, maxWidth: 160 }}
               />
             </Link>
           </div>
