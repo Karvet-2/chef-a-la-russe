@@ -58,7 +58,7 @@ export default function LoginPage() {
                   alt=""
                   width={240}
                   height={80}
-                  className="h-16 sm:h-20 w-auto max-w-[240px] object-contain"
+                  className="h-12 sm:h-14 w-auto max-w-[180px] object-contain"
                 />
               </Link>
             </div>
