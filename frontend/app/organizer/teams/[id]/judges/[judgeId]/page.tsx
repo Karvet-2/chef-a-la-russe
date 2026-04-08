@@ -1,1 +1,498 @@
-export { default } from '../../../../../../../app/organizer/teams/[id]/judges/[judgeId]/page'
+'use client'
+
+import React, { useEffect, useState } from 'react'
+import { useRouter, useParams } from 'next/navigation'
+import OrganizerHeader from '@/components/organizer/OrganizerHeader'
+import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
+import { api, Result, User } from '@/lib/api'
+import { JudgeSheetConfirm, JudgeSheetToast } from '@/components/organizer/JudgeSheetFeedback'
+import { activeStageDishCount } from '@backend/lib/dish-count'
+
+type CriterionKey =
+  | 'miseEnPlace'
+  | 'hygieneWaste'
+  | 'professionalPrep'
+  | 'innovation'
+  | 'service'
+  | 'presentation'
+  | 'tasteTexture'
+
+interface CriterionData {
+  key: CriterionKey
+  title: string
+  max: number
+}
+
+function getJudgeLoginLabel(judge?: User | null) {
+  if (judge?.fio?.trim()) return judge.fio.trim()
+  const loginFromEmail = judge?.email?.split('@')[0]?.trim()
+  if (loginFromEmail) return loginFromEmail
+  return 'Судья'
+}
+
+export default function JudgeDetailsPage() {
+  const router = useRouter()
+  const params = useParams()
+  const teamId = params.id as string
+  const judgeId = params.judgeId as string
+  
+  const { isAuthenticated, loading, user } = useAuth()
+  const [team, setTeam] = useState<any>(null)
+  const [judge, setJudge] = useState<User | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [dataLoading, setDataLoading] = useState(true)
+  
+  const [formData, setFormData] = useState<{
+    [K in CriterionKey]: { [dishNumber: number]: number }
+  }>({
+    miseEnPlace: { 1: 0, 2: 0, 3: 0 },
+    hygieneWaste: { 1: 0, 2: 0, 3: 0 },
+    professionalPrep: { 1: 0, 2: 0, 3: 0 },
+    innovation: { 1: 0, 2: 0, 3: 0 },
+    service: { 1: 0, 2: 0, 3: 0 },
+    presentation: { 1: 0, 2: 0, 3: 0 },
+    tasteTexture: { 1: 0, 2: 0, 3: 0 },
+  })
+  
+  const [penalties, setPenalties] = useState<{ [dishNumber: number]: number }>({ 1: 0, 2: 0, 3: 0 })
+  const [comments, setComments] = useState<{ [criterion: string]: string }>({})
+  const [isFixed, setIsFixed] = useState(false)
+  const [stage, setStage] = useState<'qualifier' | 'final'>('qualifier')
+  const [dishCount, setDishCount] = useState(3)
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null)
+  const [confirmSheet, setConfirmSheet] = useState<null | { mode: 'fix' | 'unfix' }>(null)
+
+  const notify = (message: string, variant: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, variant })
+  }
+
+  /** Админ может править любой лист; судья (организатор) — только свой */
+  const canEdit = user?.role === 'admin' || user?.id === judgeId
+
+  useEffect(() => {
+    if (!loading) {
+      if (!isAuthenticated) {
+        router.push('/login')
+      } else if (user?.role !== 'organizer') {
+        router.push('/')
+      } else if (teamId && judgeId) {
+        loadData()
+      }
+    }
+  }, [loading, isAuthenticated, user, router, teamId, judgeId])
+
+  const loadData = async () => {
+    try {
+      const [teamData, judgesData, resultsData] = await Promise.all([
+        api.getOrganizerTeam(teamId),
+        api.getOrganizerJudges(),
+        api.getJudgeResultsByStage(teamId, judgeId, 'qualifier'),
+      ])
+
+      setTeam(teamData)
+      const teamStage: 'qualifier' | 'final' = teamData?.stage === 'final' ? 'final' : 'qualifier'
+      setStage(teamStage)
+
+      const foundJudge = judgesData.find((j: User) => j.id === judgeId)
+      setJudge(foundJudge || null)
+      const stageResults =
+        teamStage === 'final'
+          ? await api.getJudgeResultsByStage(teamId, judgeId, 'final')
+          : resultsData
+      const dishCountVal = activeStageDishCount(teamData)
+      setDishCount(dishCountVal)
+
+      const initDishMap = (count: number) => {
+        const map: { [dishNumber: number]: number } = {}
+        for (let d = 1; d <= count; d++) map[d] = 0
+        return map
+      }
+
+      const initialFormData: typeof formData = {
+        miseEnPlace: initDishMap(dishCountVal),
+        hygieneWaste: initDishMap(dishCountVal),
+        professionalPrep: initDishMap(dishCountVal),
+        innovation: initDishMap(dishCountVal),
+        service: initDishMap(dishCountVal),
+        presentation: initDishMap(dishCountVal),
+        tasteTexture: initDishMap(dishCountVal),
+      }
+      
+      const initialPenalties: { [dishNumber: number]: number } = initDishMap(dishCountVal)
+      
+      stageResults.forEach((result: Result) => {
+        initialFormData.miseEnPlace[result.dishNumber] = result.miseEnPlace
+        initialFormData.hygieneWaste[result.dishNumber] = result.hygieneWaste
+        initialFormData.professionalPrep[result.dishNumber] = result.professionalPrep
+        initialFormData.innovation[result.dishNumber] = result.innovation
+        initialFormData.service[result.dishNumber] = result.service
+        initialFormData.presentation[result.dishNumber] = result.presentation
+        initialFormData.tasteTexture[result.dishNumber] = result.tasteTexture
+        initialPenalties[result.dishNumber] = result.penalties || 0
+      })
+      
+      setFormData(initialFormData)
+      setPenalties(initialPenalties)
+      
+      const allResultsFixed = stageResults.length > 0 && stageResults.every((r: any) => r.status === 'fixed')
+      setIsFixed(allResultsFixed)
+    } catch (error) {
+      console.error('Error loading data:', error)
+    } finally {
+      setDataLoading(false)
+    }
+  }
+
+  const handleSave = async () => {
+    if (!canEdit) return
+    if (isFixed) {
+      notify('Лист зафиксирован, редактирование невозможно', 'info')
+      return
+    }
+    
+    setSaving(true)
+    try {
+      for (const dishNumber of dishNumbers) {
+        await api.saveJudgeResult(teamId, judgeId, {
+          dishNumber,
+          stage,
+          miseEnPlace: Number(formData.miseEnPlace[dishNumber]) || 0,
+          hygieneWaste: Number(formData.hygieneWaste[dishNumber]) || 0,
+          professionalPrep: Number(formData.professionalPrep[dishNumber]) || 0,
+          innovation: Number(formData.innovation[dishNumber]) || 0,
+          service: Number(formData.service[dishNumber]) || 0,
+          presentation: Number(formData.presentation[dishNumber]) || 0,
+          tasteTexture: Number(formData.tasteTexture[dishNumber]) || 0,
+          penalties: Number(penalties[dishNumber]) || 0,
+        })
+      }
+      await loadData()
+      notify('Оценки успешно сохранены', 'success')
+    } catch (error: any) {
+      console.error('Error saving results:', error)
+      notify(error?.message || 'Ошибка сохранения. Проверьте введенные данные.', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const runFixSheet = async () => {
+    try {
+      await api.fixResultSheet(teamId, judgeId, stage)
+      setIsFixed(true)
+      notify('Лист успешно зафиксирован', 'success')
+      await loadData()
+    } catch (error: any) {
+      notify(error.message || 'Ошибка фиксации листа', 'error')
+    }
+  }
+
+  const runUnfixSheet = async () => {
+    try {
+      await api.unfixResultSheet(teamId, judgeId, stage)
+      setIsFixed(false)
+      notify('Лист успешно разблокирован', 'success')
+      await loadData()
+    } catch (error: any) {
+      notify(error.message || 'Ошибка разблокировки листа', 'error')
+    }
+  }
+
+  const handleFixSheet = () => {
+    if (!canEdit) return
+    setConfirmSheet({ mode: 'fix' })
+  }
+
+  const handleUnfixSheet = () => {
+    if (!canEdit) return
+    setConfirmSheet({ mode: 'unfix' })
+  }
+
+  const criteria: CriterionData[] = [
+    { key: 'miseEnPlace', title: 'Организация рабочего места (mise en place)', max: 5 },
+    { key: 'hygieneWaste', title: 'Гигиена и пищевые отходы', max: 10 },
+    { key: 'professionalPrep', title: 'Правильное профессиональное приготовление', max: 15 },
+    { key: 'innovation', title: 'Инновационность', max: 5 },
+    { key: 'service', title: 'Сервис', max: 5 },
+    { key: 'presentation', title: 'Презентация', max: 10 },
+    { key: 'tasteTexture', title: 'Вкус и текстура', max: 50 },
+  ]
+
+  const dishNumbers = Array.from({ length: dishCount }, (_, i) => i + 1)
+
+  const getCriterionTotal = (criterionKey: CriterionKey) => {
+    return dishNumbers.reduce((sum, d) => sum + (formData[criterionKey][d] || 0), 0)
+  }
+
+  const getCriterionMax = (criterionKey: CriterionKey) => {
+    const criterion = criteria.find((c) => c.key === criterionKey)
+    return criterion ? criterion.max * dishCount : 0
+  }
+
+  const getDishTotal = (dishNumber: number) => {
+    const raw =
+      formData.miseEnPlace[dishNumber] +
+      formData.hygieneWaste[dishNumber] +
+      formData.professionalPrep[dishNumber] +
+      formData.innovation[dishNumber] +
+      formData.service[dishNumber] +
+      formData.presentation[dishNumber] +
+      formData.tasteTexture[dishNumber]
+    return Math.max(0, Math.min(100, raw - (penalties[dishNumber] || 0)))
+  }
+
+  /** Средний балл по блюдам (макс. 100), а не сумма по всем блюдам */
+  const getOverallAverage = () => {
+    const dishTotals = dishNumbers.map((d) => getDishTotal(d))
+    return dishTotals.reduce((sum, v) => sum + v, 0) / dishCount
+  }
+
+  const getProgressPercentage = (criterionKey: CriterionKey) => {
+    const total = getCriterionTotal(criterionKey)
+    const max = getCriterionMax(criterionKey)
+    return max > 0 ? (total / max) * 100 : 0
+  }
+
+  if (loading || dataLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Загрузка...</p>
+      </div>
+    )
+  }
+  
+  if (!isAuthenticated || user?.role !== 'organizer') {
+    return null
+  }
+
+  return (
+    <div className="min-h-screen">
+      {toast && (
+        <JudgeSheetToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <JudgeSheetConfirm
+        open={confirmSheet !== null}
+        title={confirmSheet?.mode === 'unfix' ? 'Разблокировать лист?' : 'Зафиксировать лист?'}
+        message={
+          confirmSheet?.mode === 'unfix'
+            ? 'После разблокировки редактирование оценок снова станет доступным.'
+            : 'После фиксации редактирование листа будет недоступно. Продолжить?'
+        }
+        confirmLabel={confirmSheet?.mode === 'unfix' ? 'Разблокировать' : 'Зафиксировать'}
+        onCancel={() => setConfirmSheet(null)}
+        onConfirm={() => {
+          const mode = confirmSheet?.mode
+          setConfirmSheet(null)
+          if (mode === 'fix') void runFixSheet()
+          else if (mode === 'unfix') void runUnfixSheet()
+        }}
+      />
+      <OrganizerHeader />
+      
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
+        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
+          <div className="mb-6 flex items-start justify-between">
+            <div>
+              <p className="text-[#71717B] text-sm mb-2">
+                Команда
+              </p>
+              <h1 className="text-[23px] font-semibold text-black mb-2 underline decoration-[#0F172A] decoration-1">
+                {team?.name || 'Неизвестно'}
+              </h1>
+              <p className="text-[#71717B] text-sm">
+                {getJudgeLoginLabel(judge)}
+              </p>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <div className="bg-[#0F172A] text-white px-6 py-3 rounded-[8px] text-right">
+                <div className="text-[18px] font-semibold">
+                  {getOverallAverage().toFixed(2)} / 100
+                </div>
+              </div>
+              <Link
+                href={`/organizer/teams/${teamId}`}
+                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+              >
+                Назад
+              </Link>
+            </div>
+          </div>
+
+          {!canEdit && (
+            <div className="mb-6 rounded-[12px] border border-[#E9EEF4] bg-[#F8FAFC] px-4 py-3 text-sm text-[#475569]">
+              Режим просмотра: вы смотрите лист другого судьи. Изменять оценки и фиксацию может только владелец листа или администратор.
+            </div>
+          )}
+
+          <div className="space-y-6">
+            <div className="border-2 border-[#E9EEF4] rounded-[21px] overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-[#F1F5F9]">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-[#71717B]">Критерий</th>
+                    {dishNumbers.map(d => (
+                      <th key={d} className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[180px]">
+                        Блюдо {d}
+                      </th>
+                    ))}
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[120px]">
+                      Σ по блюдам
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {criteria.map((criterion) => {
+                    const total = getCriterionTotal(criterion.key)
+                    const max = getCriterionMax(criterion.key)
+                    const progress = getProgressPercentage(criterion.key)
+                    
+                    return (
+                      <React.Fragment key={criterion.key}>
+                        <tr>
+                          <td className="px-6 py-4 border-b-0">
+                            <div>
+                              <h3 className="text-[16px] font-semibold text-black mb-1">
+                                {criterion.title}
+                              </h3>
+                              <p className="text-xs text-[#71717B]">
+                                max: {criterion.max} за блюдо
+                              </p>
+                            </div>
+                          </td>
+                          {dishNumbers.map((dishNumber) => (
+                            <td key={dishNumber} className="px-6 py-4 text-center border-b-0">
+                              <div className="flex items-center justify-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max={criterion.max}
+                                  value={formData[criterion.key][dishNumber] || 0}
+                                  onChange={(e) => {
+                                    if (isFixed || !canEdit) return
+                                    const value = Math.max(0, Math.min(criterion.max, parseFloat(e.target.value) || 0))
+                                    setFormData(prev => ({
+                                      ...prev,
+                                      [criterion.key]: {
+                                        ...prev[criterion.key],
+                                        [dishNumber]: value
+                                      }
+                                    }))
+                                  }}
+                                  disabled={isFixed || !canEdit}
+                                  className="w-16 px-3 py-2 border border-[#E9EEF4] rounded-lg text-sm text-center disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
+                                />
+                                <span className="text-sm text-[#71717B]">
+                                  /{criterion.max}
+                                </span>
+                              </div>
+                            </td>
+                          ))}
+                          <td className="px-6 py-4 text-center border-b-0">
+                            <div className="text-[16px] font-semibold text-black">
+                              {total} / {max}
+                            </div>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td colSpan={dishCount + 2} className="px-6 py-4 bg-white border-t-0">
+                            <div className="space-y-4">
+                              <div>
+                                <label className="block text-sm font-semibold text-black mb-2">
+                                  Комментарий по критерию
+                                </label>
+                                <textarea
+                                  value={comments[criterion.key] || ''}
+                                  onChange={(e) => {
+                                    if (isFixed || !canEdit) return
+                                    setComments(prev => ({ ...prev, [criterion.key]: e.target.value }))
+                                  }}
+                                  placeholder="Введите комментарий (за что сняты баллы)"
+                                  disabled={isFixed || !canEdit}
+                                  className="w-full px-4 py-2 border border-[#E9EEF4] rounded-lg text-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
+                                  rows={3}
+                                />
+                              </div>
+
+                              <div className="w-full bg-gray-200 rounded-full h-2">
+                                <div
+                                  className="bg-[#0F172A] h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${progress}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </React.Fragment>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="border-2 border-[#E9EEF4] rounded-[21px] p-6 bg-gray-50">
+              <h3 className="text-[18px] font-semibold text-black mb-4">Итог по команде</h3>
+              <p className="text-sm text-[#71717B] mb-3">
+                По регламенту за каждое блюдо — до 100 баллов; итоговый показатель — среднее по блюдам.
+              </p>
+              <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap gap-6">
+                  {dishNumbers.map((d) => (
+                    <div key={d} className="text-sm font-semibold text-black">
+                      Блюдо {d}: {getDishTotal(d).toFixed(1)} / 100
+                    </div>
+                  ))}
+                </div>
+                <div className="text-[18px] font-semibold text-[#0F172A]">
+                  Средний балл: {getOverallAverage().toFixed(2)} / 100
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {canEdit && (
+            <div className="mt-8 flex gap-4 justify-end">
+              <button
+                onClick={handleSave}
+                disabled={saving || isFixed}
+                className="flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Сохранить
+              </button>
+              {isFixed ? (
+                <button
+                  onClick={handleUnfixSheet}
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Разблокировать лист
+                </button>
+              ) : (
+                <button
+                  onClick={handleFixSheet}
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-[#0F172A] text-white px-6 py-3 rounded-[6px] text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Зафиксировать лист
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </main>
+    </div>
+  )
+}

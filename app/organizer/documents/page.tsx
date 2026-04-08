@@ -63,7 +63,7 @@ function DocumentsViewPageContent() {
   const [teams, setTeams] = useState<OrganizerTeamRow[]>([])
   const [teamDishUploads, setTeamDishUploads] = useState<UploadWithUser[]>([])
   const [selectedTeamId, setSelectedTeamId] = useState(() => searchParams.get('teamId') || '')
-  /** Участник из URL учитываем только вместе с teamId — иначе фильтр по человеку без команды ломал выдачу «Все команды» */
+  /** Участник из URL — только вместе с teamId */
   const [selectedMemberId, setSelectedMemberId] = useState(() => {
     const t = searchParams.get('teamId')
     const u = searchParams.get('userId')
@@ -152,10 +152,12 @@ function DocumentsViewPageContent() {
 
   const refreshDocuments = useCallback(async () => {
     try {
-      const teamId = selectedTeamId || undefined
-      /** Без команды — все файлы из «Документы»; userId только вместе с командой. */
-      const userId = teamId ? selectedMemberId || undefined : undefined
-      const docs = await api.getParticipantDocuments(userId, teamId)
+      if (!selectedTeamId) {
+        setDocuments([])
+        return
+      }
+      const userId = selectedMemberId || undefined
+      const docs = await api.getParticipantDocuments(userId, selectedTeamId)
       setDocuments(docs)
     } catch (error) {
       console.error('Error loading documents:', error)
@@ -167,13 +169,6 @@ function DocumentsViewPageContent() {
     if (loading || dataLoading) return
     refreshDocuments()
   }, [loading, dataLoading, refreshDocuments])
-
-  /** Сброс участника при переключении на «Все команды» (на случай рассинхрона состояния) */
-  useEffect(() => {
-    if (!selectedTeamId && selectedMemberId) {
-      setSelectedMemberId('')
-    }
-  }, [selectedTeamId, selectedMemberId])
 
   useEffect(() => {
     reloadTeamUploads()
@@ -465,7 +460,7 @@ function DocumentsViewPageContent() {
               Документы участников
             </h1>
             <p className="text-sm text-[#71717B]">
-              «Все команды» — все файлы из раздела «Документы» у всех участников. После выбора команды видны командные материалы (блюда, меню) и файлы из «Документов» по составу. Второй фильтр — только файлы выбранного человека (любые расширения: pdf, png, jpg, docx и т.д.).
+              Выберите команду в списке ниже, чтобы увидеть материалы по блюдам и файлы раздела «Документы» по составу команды.
             </p>
           </div>
 
@@ -482,7 +477,9 @@ function DocumentsViewPageContent() {
                 }}
                 className="w-full max-w-xl px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:border-transparent"
               >
-                <option value="">Все команды</option>
+                <option value="" disabled>
+                  Выберите команду
+                </option>
                 {[...teams]
                   .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
                   .map((t) => (
@@ -605,13 +602,20 @@ function DocumentsViewPageContent() {
 
           <div className="mb-4">
             <h2 className="text-lg font-semibold text-black mb-1">Файлы из раздела «Документы»</h2>
+            <p className="text-sm text-[#71717B] mb-2">
+              Загрузки из личного кабинета (любой допустимый формат).
+            </p>
             <p className="text-sm text-[#71717B] mb-4">
-              Загрузки из личного кабинета (любой допустимый формат). Сортировка: участник → тип файла → имя файла. Кнопка «Просмотр» зависит от реального расширения файла на диске, а не только от названия.
+              Сортировка: участник → тип файла → имя файла. Кнопка «Просмотр» зависит от реального расширения файла на диске, а не только от названия.
             </p>
           </div>
 
           <div className="space-y-3 sm:space-y-4">
-            {documents.length === 0 ? (
+            {!selectedTeamId ? (
+              <div className="text-center py-12 border border-dashed border-[#E2E8F0] rounded-[16px]">
+                <p className="text-sm text-[#71717B]">Сначала выберите команду в фильтре выше.</p>
+              </div>
+            ) : documents.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-sm text-[#71717B]">Документы не найдены</p>
               </div>

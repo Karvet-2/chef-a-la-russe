@@ -5,7 +5,8 @@ import { useRouter, useParams } from 'next/navigation'
 import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { api, Result, User, ViolationPhoto, getToken } from '@/lib/api'
+import { api, Result, User } from '@/lib/api'
+import { JudgeSheetConfirm, JudgeSheetToast } from '@/components/organizer/JudgeSheetFeedback'
 import { activeStageDishCount } from '@backend/lib/dish-count'
 
 type CriterionKey =
@@ -30,84 +31,6 @@ function getJudgeLoginLabel(judge?: User | null) {
   return 'Судья'
 }
 
-function PhotoImage({ photoId, photoUrls, setPhotoUrls }: { photoId: string, photoUrls: { [key: string]: string }, setPhotoUrls: (fn: (prev: { [key: string]: string }) => { [key: string]: string }) => void }) {
-  const [imgSrc, setImgSrc] = useState<string | null>(photoUrls[photoId] || null)
-  const [error, setError] = useState(false)
-
-  useEffect(() => {
-    if (photoUrls[photoId]) {
-      setImgSrc(photoUrls[photoId])
-      return
-    }
-
-    const loadPhoto = async () => {
-      try {
-        const token = getToken()
-        const response = await fetch(`/api/organizer/violation-photos/view?id=${photoId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        })
-        if (response.ok) {
-          const blob = await response.blob()
-          const url = URL.createObjectURL(blob)
-          setImgSrc(url)
-          setPhotoUrls((prev: { [key: string]: string }) => ({ ...prev, [photoId]: url }))
-        } else {
-          setError(true)
-        }
-      } catch (err) {
-        console.error('Error loading photo:', err)
-        setError(true)
-      }
-    }
-
-    loadPhoto()
-  }, [photoId])
-
-  const handleClick = async () => {
-    try {
-      const token = getToken()
-      const response = await fetch(`/api/organizer/violation-photos/view?id=${photoId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-      if (response.ok) {
-        const blob = await response.blob()
-        const url = URL.createObjectURL(blob)
-        window.open(url, '_blank')
-      }
-    } catch (error) {
-      alert('Ошибка открытия фото')
-    }
-  }
-
-  if (error || !imgSrc) {
-    return (
-      <div className="w-32 h-32 rounded-lg border-2 border-[#E9EEF4] bg-gray-100 flex items-center justify-center">
-        <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      </div>
-    )
-  }
-
-  return (
-    <div className="w-32 h-32 rounded-lg border-2 border-[#E9EEF4] overflow-hidden bg-gray-100">
-      <img
-        src={imgSrc}
-        alt="Violation"
-        className="w-full h-full object-cover cursor-pointer"
-        onClick={handleClick}
-        onError={() => setError(true)}
-      />
-    </div>
-  )
-}
-
-
 export default function JudgeDetailsPage() {
   const router = useRouter()
   const params = useParams()
@@ -115,7 +38,6 @@ export default function JudgeDetailsPage() {
   const judgeId = params.judgeId as string
   
   const { isAuthenticated, loading, user } = useAuth()
-  const [results, setResults] = useState<Result[]>([])
   const [team, setTeam] = useState<any>(null)
   const [judge, setJudge] = useState<User | null>(null)
   const [saving, setSaving] = useState(false)
@@ -135,11 +57,15 @@ export default function JudgeDetailsPage() {
   
   const [penalties, setPenalties] = useState<{ [dishNumber: number]: number }>({ 1: 0, 2: 0, 3: 0 })
   const [comments, setComments] = useState<{ [criterion: string]: string }>({})
-  const [violationPhotos, setViolationPhotos] = useState<{ [key: string]: ViolationPhoto[] }>({})
-  const [photoUrls, setPhotoUrls] = useState<{ [photoId: string]: string }>({})
   const [isFixed, setIsFixed] = useState(false)
   const [stage, setStage] = useState<'qualifier' | 'final'>('qualifier')
   const [dishCount, setDishCount] = useState(3)
+  const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' | 'info' } | null>(null)
+  const [confirmSheet, setConfirmSheet] = useState<null | { mode: 'fix' | 'unfix' }>(null)
+
+  const notify = (message: string, variant: 'success' | 'error' | 'info' = 'success') => {
+    setToast({ message, variant })
+  }
 
   /** Админ может править любой лист; судья (организатор) — только свой */
   const canEdit = user?.role === 'admin' || user?.id === judgeId
@@ -174,8 +100,6 @@ export default function JudgeDetailsPage() {
         teamStage === 'final'
           ? await api.getJudgeResultsByStage(teamId, judgeId, 'final')
           : resultsData
-      setResults(stageResults)
-      
       const dishCountVal = activeStageDishCount(teamData)
       setDishCount(dishCountVal)
 
@@ -197,8 +121,6 @@ export default function JudgeDetailsPage() {
       
       const initialPenalties: { [dishNumber: number]: number } = initDishMap(dishCountVal)
       
-      const photosMap: { [key: string]: ViolationPhoto[] } = {}
-      
       stageResults.forEach((result: Result) => {
         initialFormData.miseEnPlace[result.dishNumber] = result.miseEnPlace
         initialFormData.hygieneWaste[result.dishNumber] = result.hygieneWaste
@@ -208,45 +130,13 @@ export default function JudgeDetailsPage() {
         initialFormData.presentation[result.dishNumber] = result.presentation
         initialFormData.tasteTexture[result.dishNumber] = result.tasteTexture
         initialPenalties[result.dishNumber] = result.penalties || 0
-        
-        if (result.violationPhotos && result.violationPhotos.length > 0) {
-          result.violationPhotos.forEach((photo: ViolationPhoto) => {
-            const key = `${result.id}_${photo.criterionKey}`
-            if (!photosMap[key]) {
-              photosMap[key] = []
-            }
-            photosMap[key].push(photo)
-          })
-        }
       })
       
       setFormData(initialFormData)
       setPenalties(initialPenalties)
-      setViolationPhotos(photosMap)
       
       const allResultsFixed = stageResults.length > 0 && stageResults.every((r: any) => r.status === 'fixed')
       setIsFixed(allResultsFixed)
-      
-      const urls: { [photoId: string]: string } = {}
-      for (const key in photosMap) {
-        for (const photo of photosMap[key]) {
-          try {
-            const token = getToken()
-            const response = await fetch(`/api/organizer/violation-photos/view?id=${photo.id}`, {
-              headers: {
-                'Authorization': `Bearer ${token}`,
-              },
-            })
-            if (response.ok) {
-              const blob = await response.blob()
-              urls[photo.id] = URL.createObjectURL(blob)
-            }
-          } catch (error) {
-            console.error('Error loading photo:', error)
-          }
-        }
-      }
-      setPhotoUrls(urls)
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -257,7 +147,7 @@ export default function JudgeDetailsPage() {
   const handleSave = async () => {
     if (!canEdit) return
     if (isFixed) {
-      alert('Лист зафиксирован, редактирование невозможно')
+      notify('Лист зафиксирован, редактирование невозможно', 'info')
       return
     }
     
@@ -278,45 +168,45 @@ export default function JudgeDetailsPage() {
         })
       }
       await loadData()
-      alert('Оценки успешно сохранены')
+      notify('Оценки успешно сохранены', 'success')
     } catch (error: any) {
       console.error('Error saving results:', error)
-      alert(error?.message || 'Ошибка сохранения. Проверьте введенные данные.')
+      notify(error?.message || 'Ошибка сохранения. Проверьте введенные данные.', 'error')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleFixSheet = async () => {
-    if (!canEdit) return
-    if (!confirm('Вы уверены, что хотите зафиксировать лист? После фиксации редактирование будет невозможно.')) {
-      return
-    }
-
+  const runFixSheet = async () => {
     try {
       await api.fixResultSheet(teamId, judgeId, stage)
       setIsFixed(true)
-      alert('Лист успешно зафиксирован')
+      notify('Лист успешно зафиксирован', 'success')
       await loadData()
     } catch (error: any) {
-      alert(error.message || 'Ошибка фиксации листа')
+      notify(error.message || 'Ошибка фиксации листа', 'error')
     }
   }
 
-  const handleUnfixSheet = async () => {
-    if (!canEdit) return
-    if (!confirm('Вы уверены, что хотите разблокировать лист? После разблокировки редактирование станет возможным.')) {
-      return
-    }
-
+  const runUnfixSheet = async () => {
     try {
       await api.unfixResultSheet(teamId, judgeId, stage)
       setIsFixed(false)
-      alert('Лист успешно разблокирован')
+      notify('Лист успешно разблокирован', 'success')
       await loadData()
     } catch (error: any) {
-      alert(error.message || 'Ошибка разблокировки листа')
+      notify(error.message || 'Ошибка разблокировки листа', 'error')
     }
+  }
+
+  const handleFixSheet = () => {
+    if (!canEdit) return
+    setConfirmSheet({ mode: 'fix' })
+  }
+
+  const handleUnfixSheet = () => {
+    if (!canEdit) return
+    setConfirmSheet({ mode: 'unfix' })
   }
 
   const criteria: CriterionData[] = [
@@ -364,82 +254,6 @@ export default function JudgeDetailsPage() {
     return max > 0 ? (total / max) * 100 : 0
   }
 
-  const handleFileUpload = async (criterionKey: string, file: File) => {
-    if (!canEdit) return
-    if (isFixed) {
-      alert('Лист зафиксирован, добавление фото невозможно')
-      return
-    }
-
-    try {
-      const dishNumber = 1
-      const existingResult = results.find(r => r.dishNumber === dishNumber)
-      
-      if (!existingResult) {
-        alert('Сначала сохраните оценки для хотя бы одного блюда')
-        return
-      }
-
-      const photo = await api.uploadViolationPhoto(existingResult.id, criterionKey, file)
-      
-      const key = `${existingResult.id}_${criterionKey}`
-      setViolationPhotos(prev => ({
-        ...prev,
-        [key]: [...(prev[key] || []), photo]
-      }))
-
-      const token = getToken()
-      const response = await fetch(`/api/organizer/violation-photos/view?id=${photo.id}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      })
-      if (response.ok) {
-        const blob = await response.blob()
-        setPhotoUrls(prev => ({
-          ...prev,
-          [photo.id]: URL.createObjectURL(blob)
-        }))
-      }
-    } catch (error: any) {
-      alert(error.message || 'Ошибка загрузки фото')
-    }
-  }
-
-  const handleDeletePhoto = async (photoId: string, resultId: string, criterionKey: string) => {
-    if (!canEdit) return
-    if (!confirm('Вы уверены, что хотите удалить это фото?')) {
-      return
-    }
-
-    try {
-      await api.deleteViolationPhoto(photoId)
-      
-      const key = `${resultId}_${criterionKey}`
-      setViolationPhotos(prev => ({
-        ...prev,
-        [key]: (prev[key] || []).filter(p => p.id !== photoId)
-      }))
-    } catch (error: any) {
-      alert(error.message || 'Ошибка удаления фото')
-    }
-  }
-
-  const getPhotosForCriterion = (criterionKey: string) => {
-    const dishNumber = 1
-    const result = results.find(r => r.dishNumber === dishNumber)
-    if (!result) return []
-    
-    const key = `${result.id}_${criterionKey}`
-    return violationPhotos[key] || []
-  }
-
-  const getResultIdForCriterion = (criterionKey: string) => {
-    const dishNumber = 1
-    const result = results.find(r => r.dishNumber === dishNumber)
-    return result?.id || ''
-  }
-
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -454,6 +268,30 @@ export default function JudgeDetailsPage() {
 
   return (
     <div className="min-h-screen">
+      {toast && (
+        <JudgeSheetToast
+          message={toast.message}
+          variant={toast.variant}
+          onClose={() => setToast(null)}
+        />
+      )}
+      <JudgeSheetConfirm
+        open={confirmSheet !== null}
+        title={confirmSheet?.mode === 'unfix' ? 'Разблокировать лист?' : 'Зафиксировать лист?'}
+        message={
+          confirmSheet?.mode === 'unfix'
+            ? 'После разблокировки редактирование оценок снова станет доступным.'
+            : 'После фиксации редактирование листа будет недоступно. Продолжить?'
+        }
+        confirmLabel={confirmSheet?.mode === 'unfix' ? 'Разблокировать' : 'Зафиксировать'}
+        onCancel={() => setConfirmSheet(null)}
+        onConfirm={() => {
+          const mode = confirmSheet?.mode
+          setConfirmSheet(null)
+          if (mode === 'fix') void runFixSheet()
+          else if (mode === 'unfix') void runUnfixSheet()
+        }}
+      />
       <OrganizerHeader />
       
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
@@ -578,54 +416,6 @@ export default function JudgeDetailsPage() {
                                   className="w-full px-4 py-2 border border-[#E9EEF4] rounded-lg text-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
                                   rows={3}
                                 />
-                              </div>
-
-                              <div>
-                                <div className="flex flex-wrap items-center gap-3 mb-3">
-                                  <label className={`flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[6px] text-sm font-semibold transition-colors ${isFixed || !canEdit ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      className="hidden"
-                                      disabled={isFixed || !canEdit}
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0]
-                                        if (file) {
-                                          handleFileUpload(criterion.key, file)
-                                        }
-                                        e.target.value = ''
-                                      }}
-                                    />
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    Добавить фото нарушения
-                                  </label>
-                                  {getPhotosForCriterion(criterion.key).length > 0 && (
-                                    <button className="bg-[#0F172A] text-white px-4 py-2 rounded-[6px] text-sm font-semibold">
-                                      Фото: {getPhotosForCriterion(criterion.key).length}
-                                    </button>
-                                  )}
-                                </div>
-                                {getPhotosForCriterion(criterion.key).length > 0 && (
-                                  <div className="mt-3">
-                                    {getPhotosForCriterion(criterion.key).map((photo) => (
-                                      <div key={photo.id} className="relative inline-block group">
-                                        <PhotoImage photoId={photo.id} photoUrls={photoUrls} setPhotoUrls={setPhotoUrls} />
-                                        {!isFixed && canEdit && (
-                                          <button
-                                            onClick={() => handleDeletePhoto(photo.id, getResultIdForCriterion(criterion.key), criterion.key)}
-                                            className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md text-base font-semibold leading-none z-10"
-                                            title="Удалить фото"
-                                          >
-                                            ×
-                                          </button>
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
                               </div>
 
                               <div className="w-full bg-gray-200 rounded-full h-2">
