@@ -51,17 +51,6 @@ export default function LoginPage() {
         <div className="chef-login-card-inner">
           <div className="chef-login-content">
           <div className="chef-login-header-block">
-            <div className="flex justify-center mb-4 sm:mb-5">
-              <Link href="/" className="inline-flex" aria-label="Chef a la Russe">
-                <img
-                  src="/logo.svg"
-                  alt=""
-                  width={120}
-                  height={41}
-                  className="h-6 sm:h-7 w-auto max-w-[90px] object-contain"
-                />
-              </Link>
-            </div>
             <h2 className="chef-login-title">
               Вход /Регистрация
             </h2>

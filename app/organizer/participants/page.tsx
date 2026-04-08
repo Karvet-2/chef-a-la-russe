@@ -12,8 +12,6 @@ interface ParticipantWithDocs extends User {
 }
 
 function getJudgeLoginLabel(judge: User) {
-  const loginFromEmail = judge.email?.split('@')[0]?.trim()
-  if (loginFromEmail) return loginFromEmail
   if (judge.fio?.trim()) return judge.fio.trim()
   return 'Судья'
 }

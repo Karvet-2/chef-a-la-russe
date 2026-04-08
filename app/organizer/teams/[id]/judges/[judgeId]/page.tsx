@@ -23,9 +23,9 @@ interface CriterionData {
 }
 
 function getJudgeLoginLabel(judge?: User | null) {
+  if (judge?.fio?.trim()) return judge.fio.trim()
   const loginFromEmail = judge?.email?.split('@')[0]?.trim()
   if (loginFromEmail) return loginFromEmail
-  if (judge?.fio?.trim()) return judge.fio.trim()
   return 'Судья'
 }
 

@@ -72,17 +72,6 @@ export default function RegisterPage() {
         <div className="bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8 max-w-[800px] mx-auto">
           <div className="max-w-[676px] mx-auto">
           <div className="mb-6 sm:mb-8">
-            <div className="flex justify-center mb-4 sm:mb-6">
-              <Link href="/" className="inline-flex" aria-label="Chef a la Russe">
-                <img
-                  src="/logo.svg"
-                  alt=""
-                  width={240}
-                  height={80}
-                  className="h-[60px] sm:h-[72px] w-auto max-w-[240px] object-contain"
-                />
-              </Link>
-            </div>
             <h2 className="text-lg sm:text-xl md:text-[20.3px] font-semibold text-black mb-4 sm:mb-6 text-center">
               Вход /Регистрация
             </h2>

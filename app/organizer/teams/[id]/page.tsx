@@ -40,9 +40,9 @@ interface TeamMemberFiles {
 }
 
 function getJudgeLoginLabel(judgeName?: string, judgeEmail?: string) {
+  if (judgeName?.trim()) return judgeName.trim()
   const loginFromEmail = judgeEmail?.split('@')[0]?.trim()
   if (loginFromEmail) return loginFromEmail
-  if (judgeName?.trim()) return judgeName.trim()
   return 'Судья'
 }
 
