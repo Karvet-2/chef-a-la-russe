@@ -77,9 +77,9 @@ export default function RegisterPage() {
                 <img
                   src="/logo.svg"
                   alt=""
-                  width={160}
-                  height={53}
-                  className="h-10 sm:h-12 w-auto max-w-[160px] object-contain"
+                  width={240}
+                  height={80}
+                  className="h-[60px] sm:h-[72px] w-auto max-w-[240px] object-contain"
                 />
               </Link>
             </div>

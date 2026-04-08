@@ -9,9 +9,6 @@ const UPLOAD_DIR = join(getUploadsRoot(), 'documents')
 const DOCUMENT_TYPE_LABELS: Record<string, string> = {
   passport: 'Паспорт',
   medbook: 'Медицинская книжка',
-  consent: 'Согласие на обработку данных',
-  admission: 'Допуск',
-  certificate: 'Справка',
 }
 
 export async function GET(request: NextRequest) {

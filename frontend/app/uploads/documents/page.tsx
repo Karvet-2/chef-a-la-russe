@@ -10,7 +10,7 @@ import { api, Document } from '@/lib/api'
 import { getToken } from '@/lib/api'
 
 type RequiredDoc = {
-  type: 'passport' | 'medbook' | 'consent' | 'admission' | 'certificate'
+  type: 'passport' | 'medbook'
   title: string
   hint: string
 }
@@ -18,9 +18,6 @@ type RequiredDoc = {
 const REQUIRED_DOCS: RequiredDoc[] = [
   { type: 'passport', title: 'Паспорт', hint: 'Разворот с фото и данными' },
   { type: 'medbook', title: 'Медицинская книжка', hint: 'Актуальная медкнижка участника' },
-  { type: 'consent', title: 'Согласие на обработку данных', hint: 'Подписанный бланк согласия' },
-  { type: 'admission', title: 'Допуск', hint: 'Официальный допуск к соревнованиям' },
-  { type: 'certificate', title: 'Справка', hint: 'Медицинская или иная требуемая справка' },
 ]
 
 export default function DocumentsPage() {
