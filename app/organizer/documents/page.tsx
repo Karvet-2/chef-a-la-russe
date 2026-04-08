@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import { useAuth } from '@/contexts/AuthContext'
@@ -43,8 +43,49 @@ function DocumentsViewPageContent() {
   const [selectedMemberId, setSelectedMemberId] = useState(() => searchParams.get('userId') || '')
   const [dataLoading, setDataLoading] = useState(true)
   const [batchDownloadingUploads, setBatchDownloadingUploads] = useState(false)
+  const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null)
 
   const selectedTeam = teams.find((t) => t.id === selectedTeamId)
+
+  const reloadTeamUploads = useCallback(async () => {
+    if (!selectedTeamId) {
+      setTeamDishUploads([])
+      return
+    }
+    try {
+      const items = await api.getTeamDishUploads(selectedTeamId)
+      setTeamDishUploads(items)
+    } catch (error) {
+      console.error('Error loading team uploads:', error)
+      setTeamDishUploads([])
+    }
+  }, [selectedTeamId])
+
+  const sortedTeamDishUploads = useMemo(() => {
+    const typeOrder: Record<string, number> = { menu: 0, techCard: 1, photo: 2 }
+    const list = [...teamDishUploads]
+    list.sort((a, b) => {
+      if (selectedMemberId) {
+        const aMine = a.user.id === selectedMemberId ? 0 : 1
+        const bMine = b.user.id === selectedMemberId ? 0 : 1
+        if (aMine !== bMine) return aMine - bMine
+      }
+      if (a.dishNumber !== b.dishNumber) return a.dishNumber - b.dishNumber
+      const ta = typeOrder[a.fileType] ?? 9
+      const tb = typeOrder[b.fileType] ?? 9
+      if (ta !== tb) return ta - tb
+      return a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
+    })
+    return list
+  }, [teamDishUploads, selectedMemberId])
+
+  const sortedDocuments = useMemo(() => {
+    return [...documents].sort((a, b) => {
+      const byName = a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
+      if (byName !== 0) return byName
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  }, [documents])
 
   useEffect(() => {
     if (!loading) {
@@ -88,20 +129,16 @@ function DocumentsViewPageContent() {
   }, [selectedTeamId, selectedMemberId, loading, dataLoading])
 
   useEffect(() => {
-    if (!selectedTeamId) {
-      setTeamDishUploads([])
-      return
-    }
-    ;(async () => {
-      try {
-        const items = await api.getTeamDishUploads(selectedTeamId)
-        setTeamDishUploads(items)
-      } catch (error) {
-        console.error('Error loading team uploads:', error)
-        setTeamDishUploads([])
-      }
-    })()
-  }, [selectedTeamId])
+    reloadTeamUploads()
+  }, [reloadTeamUploads])
+
+  /** После загрузки списка команд: сбросить участника, если он не из выбранной команды */
+  useEffect(() => {
+    if (!selectedTeamId || !selectedMemberId || teams.length === 0) return
+    const tm = teams.find((t) => t.id === selectedTeamId)
+    const ok = tm?.members?.some((m) => m.user.id === selectedMemberId)
+    if (!ok) setSelectedMemberId('')
+  }, [teams, selectedTeamId, selectedMemberId])
 
   useEffect(() => {
     const params = new URLSearchParams()
@@ -110,6 +147,24 @@ function DocumentsViewPageContent() {
     const qs = params.toString()
     router.replace(qs ? `/organizer/documents?${qs}` : '/organizer/documents', { scroll: false })
   }, [selectedTeamId, selectedMemberId, router])
+
+  const getDisplayUploadFileName = (storedName: string) => {
+    const parts = storedName.split('-')
+    return parts.length > 1 ? parts.slice(1).join('-') : storedName
+  }
+
+  const handleDetachTeamUpload = async (uploadId: string) => {
+    if (!confirm('Открепить этот файл от команды? Его можно будет загрузить снова.')) return
+    try {
+      setDeletingUploadId(uploadId)
+      await api.deleteUpload(uploadId)
+      await reloadTeamUploads()
+    } catch (error: any) {
+      alert(error.message || 'Не удалось открепить файл')
+    } finally {
+      setDeletingUploadId(null)
+    }
+  }
 
   const handleUpdateStatus = async (docId: string, status: 'confirmed' | 'rejected' | 'pending') => {
     try {
@@ -158,15 +213,15 @@ function DocumentsViewPageContent() {
   }
 
   const handleBatchDownloadUploads = async () => {
-    if (!selectedTeamId || teamDishUploads.length === 0) {
+    if (!selectedTeamId || sortedTeamDishUploads.length === 0) {
       alert('Нет файлов для скачивания')
       return
     }
     setBatchDownloadingUploads(true)
     try {
       const token = getToken()
-      for (let i = 0; i < teamDishUploads.length; i++) {
-        const u = teamDishUploads[i]
+      for (let i = 0; i < sortedTeamDishUploads.length; i++) {
+        const u = sortedTeamDishUploads[i]
         const response = await fetch(`/api/uploads/${u.id}/download`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -181,7 +236,7 @@ function DocumentsViewPageContent() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        if (i < teamDishUploads.length - 1) await new Promise(r => setTimeout(r, 400))
+        if (i < sortedTeamDishUploads.length - 1) await new Promise(r => setTimeout(r, 400))
       }
     } catch (error: any) {
       alert(error.message || 'Ошибка скачивания файлов')
@@ -361,7 +416,7 @@ function DocumentsViewPageContent() {
               Документы участников
             </h1>
             <p className="text-sm text-[#71717B]">
-              Сначала выберите команду — командные материалы (блюда, меню). Затем при необходимости сузьте личные документы по участнику.
+              Выберите команду — появятся командные материалы (блюда, меню) с кнопкой «Открепить». Вторым фильтром можно сузить личные документы по участнику; для командных файлов фильтр участника лишь меняет порядок (сначала файлы выбранного человека).
             </p>
           </div>
 
@@ -401,7 +456,11 @@ function DocumentsViewPageContent() {
                 <option value="">
                   {selectedTeamId ? 'Все участники команды' : 'Сначала выберите команду'}
                 </option>
-                {(selectedTeam?.members ?? []).map((m) => (
+                {[...(selectedTeam?.members ?? [])]
+                  .sort((a, b) =>
+                    a.user.fio.localeCompare(b.user.fio, 'ru', { sensitivity: 'base' })
+                  )
+                  .map((m) => (
                   <option key={m.id} value={m.user.id}>
                     {m.user.fio} ({m.user.email})
                   </option>
@@ -419,7 +478,7 @@ function DocumentsViewPageContent() {
                     Фото блюд, технологические карты и меню — общие для команды (загрузки из раздела «Загрузки»)
                   </p>
                 </div>
-                {teamDishUploads.length > 0 && (
+                {sortedTeamDishUploads.length > 0 && (
                   <button
                     onClick={handleBatchDownloadUploads}
                     disabled={batchDownloadingUploads}
@@ -430,13 +489,13 @@ function DocumentsViewPageContent() {
                 )}
               </div>
 
-              {teamDishUploads.length === 0 ? (
+              {sortedTeamDishUploads.length === 0 ? (
                 <div className="text-center py-8 border border-[#E9EEF4] rounded-[16px]">
                   <p className="text-sm text-[#71717B]">Командных файлов пока нет</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {teamDishUploads.map((u) => (
+                  {sortedTeamDishUploads.map((u) => (
                     <div
                       key={u.id}
                       className="border border-[#E9EEF4] rounded-[16px] p-4 sm:p-5"
@@ -444,13 +503,19 @@ function DocumentsViewPageContent() {
                       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold text-black truncate">
-                            {u.fileType === 'menu' ? 'Меню' : u.fileType === 'techCard' ? 'ТК' : 'Фото'}
-                            {u.fileType === 'menu' ? '' : ` • Блюдо ${u.dishNumber}`}
+                            {u.fileType === 'menu'
+                              ? 'Меню'
+                              : u.fileType === 'techCard'
+                                ? `Блюдо ${u.dishNumber} · ТК`
+                                : `Блюдо ${u.dishNumber} · Фото`}
                           </p>
                           <p className="text-xs text-[#71717B] mt-1 truncate">
-                            {u.fileName}
+                            {getDisplayUploadFileName(u.fileName)}
                           </p>
                           <p className="text-xs text-[#71717B] mt-1">
+                            Загрузил: <span className="font-medium text-[#475569]">{u.user.fio}</span>
+                          </p>
+                          <p className="text-xs text-[#71717B] mt-0.5">
                             {formatFileSize(u.fileSize)}
                           </p>
                         </div>
@@ -468,6 +533,14 @@ function DocumentsViewPageContent() {
                             className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-3 py-2 rounded-md text-xs font-semibold transition-colors"
                           >
                             Скачать
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDetachTeamUpload(u.id)}
+                            disabled={deletingUploadId === u.id}
+                            className="text-[#B91C1C] hover:underline px-3 py-2 rounded-md text-xs font-semibold disabled:opacity-50"
+                          >
+                            {deletingUploadId === u.id ? '…' : 'Открепить'}
                           </button>
                         </div>
                       </div>
@@ -491,7 +564,7 @@ function DocumentsViewPageContent() {
                 <p className="text-sm text-[#71717B]">Документы не найдены</p>
               </div>
             ) : (
-              documents.map((doc) => (
+              sortedDocuments.map((doc) => (
                 <div
                   key={doc.id}
                   className="border border-[#E9EEF4] rounded-[16.36px] p-4 sm:p-5 md:p-6"

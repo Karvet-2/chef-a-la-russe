@@ -84,8 +84,6 @@ export default function TeamDetailsPage() {
   const [stageLoading, setStageLoading] = useState(false)
   const [memberFiles, setMemberFiles] = useState<Record<string, TeamMemberFiles>>({})
   const [filesLoading, setFilesLoading] = useState(false)
-  const [teamDishUploads, setTeamDishUploads] = useState<UploadWithUser[]>([])
-  const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null)
   const [showEditTeam, setShowEditTeam] = useState(false)
   const [editTeamForm, setEditTeamForm] = useState({ name: '', category: '', coachName: '' })
   const [teamActionLoading, setTeamActionLoading] = useState(false)
@@ -105,14 +103,12 @@ export default function TeamDetailsPage() {
   const loadTeamData = async () => {
     try {
       setDataLoading(true)
-      const [teamData, judgesData, participantsData, dishUploadsData] = await Promise.all([
+      const [teamData, judgesData, participantsData] = await Promise.all([
         api.getOrganizerTeam(teamId),
         api.getOrganizerJudges(),
         api.getOrganizerParticipants(),
-        api.getTeamDishUploads(teamId).catch(() => [] as UploadWithUser[]),
       ])
 
-      setTeamDishUploads(dishUploadsData)
       setTeam(teamData)
       setJudges(judgesData)
       setParticipants(participantsData)
@@ -165,24 +161,6 @@ export default function TeamDetailsPage() {
     } finally {
       setDataLoading(false)
       setFilesLoading(false)
-    }
-  }
-
-  const getUploadDisplayName = (storedName: string) => {
-    const parts = storedName.split('-')
-    return parts.length > 1 ? parts.slice(1).join('-') : storedName
-  }
-
-  const handleDetachTeamUpload = async (uploadId: string) => {
-    if (!confirm('Открепить этот файл от команды? Его можно будет загрузить снова.')) return
-    try {
-      setDeletingUploadId(uploadId)
-      await api.deleteUpload(uploadId)
-      await loadTeamData()
-    } catch (error: any) {
-      alert(error.message || 'Не удалось открепить файл')
-    } finally {
-      setDeletingUploadId(null)
     }
   }
 
@@ -513,41 +491,6 @@ export default function TeamDetailsPage() {
           </div>
 
           <div className="mb-8">
-            <h2 className="text-lg font-semibold text-black mb-3">Материалы по блюдам (команда)</h2>
-            {teamDishUploads.length === 0 ? (
-              <p className="text-sm text-[#71717B] mb-6">Пока нет загрузок по блюдам и меню.</p>
-            ) : (
-              <ul className="mb-6 space-y-2 rounded-[12px] border border-[#E2E8F0] bg-[#F8FAFC] p-4">
-                {teamDishUploads.map((u) => (
-                  <li
-                    key={u.id}
-                    className="flex flex-wrap items-center justify-between gap-2 text-sm border-b border-[#E2E8F0] last:border-0 pb-2 last:pb-0"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="font-medium text-black">
-                        {u.fileType === 'menu'
-                          ? 'Меню'
-                          : u.fileType === 'techCard'
-                            ? `Блюдо ${u.dishNumber} · ТК`
-                            : `Блюдо ${u.dishNumber} · Фото`}
-                      </span>
-                      <span className="text-[#71717B] mx-2">—</span>
-                      <span className="text-[#0F172A] truncate">{getUploadDisplayName(u.fileName)}</span>
-                      <span className="text-xs text-[#94a3b8] ml-2">({u.user.fio})</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDetachTeamUpload(u.id)}
-                      disabled={deletingUploadId === u.id}
-                      className="shrink-0 text-xs font-semibold text-[#B91C1C] hover:underline disabled:opacity-50"
-                    >
-                      {deletingUploadId === u.id ? '…' : 'Открепить'}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
               <h2 className="text-lg font-semibold text-black">Файлы команды и личные документы</h2>
             </div>
