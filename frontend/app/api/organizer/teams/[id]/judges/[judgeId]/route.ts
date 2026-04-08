@@ -74,10 +74,12 @@ export async function POST(
   try {
     const { id: teamId, judgeId } = await Promise.resolve(params)
     const requester = authResult.user
-    const canEditAny = requester.role === 'organizer' || requester.role === 'admin'
-    if (!canEditAny && requester.id !== judgeId) {
+    const isAdmin = requester.role === 'admin'
+    const canEditThisSheet =
+      isAdmin || requester.id === judgeId
+    if (!canEditThisSheet) {
       return NextResponse.json(
-        { error: 'Forbidden: judge can edit only own sheet' },
+        { error: 'Forbidden: можно редактировать только свой лист' },
         { status: 403 }
       )
     }

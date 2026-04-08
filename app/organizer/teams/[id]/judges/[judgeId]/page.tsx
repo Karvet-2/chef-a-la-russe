@@ -140,6 +140,9 @@ export default function JudgeDetailsPage() {
   const [stage, setStage] = useState<'qualifier' | 'final'>('qualifier')
   const [dishCount, setDishCount] = useState(3)
 
+  /** Админ может править любой лист; судья (организатор) — только свой */
+  const canEdit = user?.role === 'admin' || user?.id === judgeId
+
   useEffect(() => {
     if (!loading) {
       if (!isAuthenticated) {
@@ -254,6 +257,7 @@ export default function JudgeDetailsPage() {
   }
 
   const handleSave = async () => {
+    if (!canEdit) return
     if (isFixed) {
       alert('Лист зафиксирован, редактирование невозможно')
       return
@@ -286,6 +290,7 @@ export default function JudgeDetailsPage() {
   }
 
   const handleFixSheet = async () => {
+    if (!canEdit) return
     if (!confirm('Вы уверены, что хотите зафиксировать лист? После фиксации редактирование будет невозможно.')) {
       return
     }
@@ -301,6 +306,7 @@ export default function JudgeDetailsPage() {
   }
 
   const handleUnfixSheet = async () => {
+    if (!canEdit) return
     if (!confirm('Вы уверены, что хотите разблокировать лист? После разблокировки редактирование станет возможным.')) {
       return
     }
@@ -361,6 +367,7 @@ export default function JudgeDetailsPage() {
   }
 
   const handleFileUpload = async (criterionKey: string, file: File) => {
+    if (!canEdit) return
     if (isFixed) {
       alert('Лист зафиксирован, добавление фото невозможно')
       return
@@ -402,6 +409,7 @@ export default function JudgeDetailsPage() {
   }
 
   const handleDeletePhoto = async (photoId: string, resultId: string, criterionKey: string) => {
+    if (!canEdit) return
     if (!confirm('Вы уверены, что хотите удалить это фото?')) {
       return
     }
@@ -479,6 +487,12 @@ export default function JudgeDetailsPage() {
             </div>
           </div>
 
+          {!canEdit && (
+            <div className="mb-6 rounded-[12px] border border-[#E9EEF4] bg-[#F8FAFC] px-4 py-3 text-sm text-[#475569]">
+              Режим просмотра: вы смотрите лист другого судьи. Изменять оценки и фиксацию может только владелец листа или администратор.
+            </div>
+          )}
+
           <div className="space-y-6">
             <div className="border-2 border-[#E9EEF4] rounded-[21px] overflow-hidden">
               <table className="w-full">
@@ -523,7 +537,7 @@ export default function JudgeDetailsPage() {
                                   max={criterion.max}
                                   value={formData[criterion.key][dishNumber] || 0}
                                   onChange={(e) => {
-                                    if (isFixed) return
+                                    if (isFixed || !canEdit) return
                                     const value = Math.max(0, Math.min(criterion.max, parseFloat(e.target.value) || 0))
                                     setFormData(prev => ({
                                       ...prev,
@@ -533,7 +547,7 @@ export default function JudgeDetailsPage() {
                                       }
                                     }))
                                   }}
-                                  disabled={isFixed}
+                                  disabled={isFixed || !canEdit}
                                   className="w-16 px-3 py-2 border border-[#E9EEF4] rounded-lg text-sm text-center disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
                                 />
                                 <span className="text-sm text-[#71717B]">
@@ -558,11 +572,11 @@ export default function JudgeDetailsPage() {
                                 <textarea
                                   value={comments[criterion.key] || ''}
                                   onChange={(e) => {
-                                    if (isFixed) return
+                                    if (isFixed || !canEdit) return
                                     setComments(prev => ({ ...prev, [criterion.key]: e.target.value }))
                                   }}
                                   placeholder="Введите комментарий (за что сняты баллы)"
-                                  disabled={isFixed}
+                                  disabled={isFixed || !canEdit}
                                   className="w-full px-4 py-2 border border-[#E9EEF4] rounded-lg text-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
                                   rows={3}
                                 />
@@ -570,12 +584,12 @@ export default function JudgeDetailsPage() {
 
                               <div>
                                 <div className="flex flex-wrap items-center gap-3 mb-3">
-                                  <label className={`flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[6px] text-sm font-semibold transition-colors ${isFixed ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
+                                  <label className={`flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[6px] text-sm font-semibold transition-colors ${isFixed || !canEdit ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}>
                                     <input
                                       type="file"
                                       accept="image/*"
                                       className="hidden"
-                                      disabled={isFixed}
+                                      disabled={isFixed || !canEdit}
                                       onChange={(e) => {
                                         const file = e.target.files?.[0]
                                         if (file) {
@@ -601,7 +615,7 @@ export default function JudgeDetailsPage() {
                                     {getPhotosForCriterion(criterion.key).map((photo) => (
                                       <div key={photo.id} className="relative inline-block group">
                                         <PhotoImage photoId={photo.id} photoUrls={photoUrls} setPhotoUrls={setPhotoUrls} />
-                                        {!isFixed && (
+                                        {!isFixed && canEdit && (
                                           <button
                                             onClick={() => handleDeletePhoto(photo.id, getResultIdForCriterion(criterion.key), criterion.key)}
                                             className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-6 h-6 flex items-center justify-center shadow-md text-base font-semibold leading-none z-10"
@@ -652,41 +666,43 @@ export default function JudgeDetailsPage() {
             </div>
           </div>
 
-          <div className="mt-8 flex gap-4 justify-end">
-            <button
-              onClick={handleSave}
-              disabled={saving || isFixed}
-              className="flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-              </svg>
-              Сохранить
-            </button>
-            {isFixed ? (
+          {canEdit && (
+            <div className="mt-8 flex gap-4 justify-end">
               <button
-                onClick={handleUnfixSheet}
-                disabled={saving}
-                className="flex items-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleSave}
+                disabled={saving || isFixed}
+                className="flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                 </svg>
-                Разблокировать лист
+                Сохранить
               </button>
-            ) : (
-              <button
-                onClick={handleFixSheet}
-                disabled={saving}
-                className="flex items-center gap-2 bg-[#0F172A] text-white px-6 py-3 rounded-[6px] text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
-                Зафиксировать лист
-              </button>
-            )}
-          </div>
+              {isFixed ? (
+                <button
+                  onClick={handleUnfixSheet}
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
+                  </svg>
+                  Разблокировать лист
+                </button>
+              ) : (
+                <button
+                  onClick={handleFixSheet}
+                  disabled={saving}
+                  className="flex items-center gap-2 bg-[#0F172A] text-white px-6 py-3 rounded-[6px] text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Зафиксировать лист
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>

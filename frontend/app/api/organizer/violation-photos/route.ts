@@ -51,6 +51,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const requester = authResult.user
+    if (requester.role !== 'admin' && result.judgeId !== requester.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: можно загружать фото только в свой лист' },
+        { status: 403 }
+      )
+    }
+
     await mkdir(UPLOAD_DIR, { recursive: true })
 
     const bytes = await file.arrayBuffer()
@@ -102,6 +110,21 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json(
         { error: 'Photo not found' },
         { status: 404 }
+      )
+    }
+
+    const resultForPhoto = await prisma.result.findUnique({
+      where: { id: photo.resultId },
+      select: { judgeId: true },
+    })
+    const requester = authResult.user
+    if (
+      requester.role !== 'admin' &&
+      (!resultForPhoto || resultForPhoto.judgeId !== requester.id)
+    ) {
+      return NextResponse.json(
+        { error: 'Forbidden: можно удалять фото только из своего листа' },
+        { status: 403 }
       )
     }
 

@@ -14,10 +14,10 @@ export async function POST(
     const teamId = resolved.id
     const judgeId = resolved.judgeId
     const requester = authResult.user
-    const canEditAny = requester.role === 'organizer' || requester.role === 'admin'
-    if (!canEditAny && requester.id !== judgeId) {
+    const canUnfixThisSheet = requester.role === 'admin' || requester.id === judgeId
+    if (!canUnfixThisSheet) {
       return NextResponse.json(
-        { error: 'Forbidden: judge can unfix only own sheet' },
+        { error: 'Forbidden: можно разблокировать только свой лист' },
         { status: 403 }
       )
     }

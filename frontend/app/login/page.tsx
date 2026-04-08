@@ -56,9 +56,9 @@ export default function LoginPage() {
                 <img
                   src="/logo.svg"
                   alt=""
-                  width={120}
-                  height={40}
-                  className="h-6 sm:h-7 w-auto max-w-[90px] object-contain"
+                  width={80}
+                  height={27}
+                  className="h-4 sm:h-5 w-auto max-w-[60px] object-contain"
                 />
               </Link>
             </div>
