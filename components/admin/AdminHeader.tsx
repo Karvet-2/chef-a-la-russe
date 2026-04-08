@@ -19,20 +19,10 @@ export default function AdminHeader() {
   return (
     <header className="w-full bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-4 sm:py-6 md:py-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 lg:mb-6">
+        <div className="mb-4 lg:mb-6">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left">
             Панель администратора
           </h1>
-          <Link href="/admin" className="hidden shrink-0 justify-center sm:flex sm:justify-end" aria-label="Chef a la Russe">
-            <img
-              src="/logo.svg"
-              alt=""
-              width={240}
-              height={80}
-              className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
-              style={{ maxHeight: 80, maxWidth: 240 }}
-            />
-          </Link>
         </div>
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 w-full min-w-0">
