@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/middleware'
+import { canAccessTeamUploadContent } from '@backend/lib/team-upload-access'
 import { readFile } from 'fs/promises'
 import { join } from 'path'
 
@@ -30,14 +31,8 @@ export async function GET(
       return NextResponse.json({ error: 'Upload not found' }, { status: 404 })
     }
 
-    const isStaff = ['admin', 'organizer'].includes(authResult.user.role)
-    const inTeam = isStaff
-      ? true
-      : !!(await prisma.teamMember.findFirst({
-          where: { teamId: upload.teamId, userId: authResult.user.id },
-        }))
-
-    if (!inTeam) {
+    const allowed = await canAccessTeamUploadContent(prisma, authResult.user, upload.teamId)
+    if (!allowed) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

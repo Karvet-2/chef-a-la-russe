@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import { useAuth } from '@/contexts/AuthContext'
-import { api, User, UploadWithUser } from '@/lib/api'
+import { api, UploadWithUser } from '@/lib/api'
 import { getToken } from '@/lib/api'
 import AdminHeader from '@/components/admin/AdminHeader'
 
@@ -22,17 +22,29 @@ interface DocumentWithUser {
   }
 }
 
+interface OrganizerTeamRow {
+  id: string
+  name: string
+  members: Array<{
+    id: string
+    userId: string
+    user: { id: string; fio: string; email: string }
+  }>
+}
+
 function DocumentsViewPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const userId = searchParams.get('userId')
   const { isAuthenticated, loading, user } = useAuth()
   const [documents, setDocuments] = useState<DocumentWithUser[]>([])
-  const [participants, setParticipants] = useState<User[]>([])
-  const [uploads, setUploads] = useState<UploadWithUser[]>([])
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(userId)
+  const [teams, setTeams] = useState<OrganizerTeamRow[]>([])
+  const [teamDishUploads, setTeamDishUploads] = useState<UploadWithUser[]>([])
+  const [selectedTeamId, setSelectedTeamId] = useState(() => searchParams.get('teamId') || '')
+  const [selectedMemberId, setSelectedMemberId] = useState(() => searchParams.get('userId') || '')
   const [dataLoading, setDataLoading] = useState(true)
   const [batchDownloadingUploads, setBatchDownloadingUploads] = useState(false)
+
+  const selectedTeam = teams.find((t) => t.id === selectedTeamId)
 
   useEffect(() => {
     if (!loading) {
@@ -41,51 +53,27 @@ function DocumentsViewPageContent() {
       } else if (!['organizer', 'admin'].includes(user?.role || '')) {
         router.push('/')
       } else {
-        loadData()
+        ;(async () => {
+          try {
+            const teamsData = await api.getOrganizerTeams()
+            setTeams(teamsData || [])
+          } catch (error) {
+            console.error('Error loading teams:', error)
+            setTeams([])
+          } finally {
+            setDataLoading(false)
+          }
+        })()
       }
     }
   }, [loading, isAuthenticated, user, router])
 
-  useEffect(() => {
-    if (selectedUserId) {
-      loadDocuments(selectedUserId)
-      loadUploads(selectedUserId)
-    } else {
-      loadDocuments()
-      setUploads([])
-    }
-  }, [selectedUserId])
-
-  const loadData = async () => {
+  const refreshDocuments = async () => {
     try {
-      const [participantsData, docs] = await Promise.all([
-        api.getOrganizerParticipants().catch(() => []),
-        selectedUserId 
-          ? api.getParticipantDocuments(selectedUserId).catch(() => [])
-          : api.getParticipantDocuments().catch(() => [])
-      ])
-      setParticipants(participantsData)
-      setDocuments(docs)
-    } catch (error) {
-      console.error('Error loading data:', error)
-    } finally {
-      setDataLoading(false)
-    }
-  }
-
-  const loadUploads = async (userId: string) => {
-    try {
-      const items = await api.getOrganizerUploads(userId)
-      setUploads(items)
-    } catch (error) {
-      console.error('Error loading uploads:', error)
-      setUploads([])
-    }
-  }
-
-  const loadDocuments = async (userId?: string) => {
-    try {
-      const docs = await api.getParticipantDocuments(userId || undefined)
+      const docs = await api.getParticipantDocuments(
+        selectedMemberId || undefined,
+        selectedTeamId || undefined
+      )
       setDocuments(docs)
     } catch (error) {
       console.error('Error loading documents:', error)
@@ -93,10 +81,40 @@ function DocumentsViewPageContent() {
     }
   }
 
+  useEffect(() => {
+    if (loading || dataLoading) return
+    refreshDocuments()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- reload when filters change
+  }, [selectedTeamId, selectedMemberId, loading, dataLoading])
+
+  useEffect(() => {
+    if (!selectedTeamId) {
+      setTeamDishUploads([])
+      return
+    }
+    ;(async () => {
+      try {
+        const items = await api.getTeamDishUploads(selectedTeamId)
+        setTeamDishUploads(items)
+      } catch (error) {
+        console.error('Error loading team uploads:', error)
+        setTeamDishUploads([])
+      }
+    })()
+  }, [selectedTeamId])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (selectedTeamId) params.set('teamId', selectedTeamId)
+    if (selectedMemberId) params.set('userId', selectedMemberId)
+    const qs = params.toString()
+    router.replace(qs ? `/organizer/documents?${qs}` : '/organizer/documents', { scroll: false })
+  }, [selectedTeamId, selectedMemberId, router])
+
   const handleUpdateStatus = async (docId: string, status: 'confirmed' | 'rejected' | 'pending') => {
     try {
       await api.updateDocumentStatus(docId, status)
-      await loadDocuments(selectedUserId || undefined)
+      await refreshDocuments()
     } catch (error: any) {
       alert(error.message || 'Ошибка обновления статуса документа')
     }
@@ -105,7 +123,7 @@ function DocumentsViewPageContent() {
   const handleConfirm = async (docId: string) => {
     try {
       await api.updateDocumentStatus(docId, 'confirmed')
-      await loadDocuments(selectedUserId || undefined)
+      await refreshDocuments()
     } catch (error: any) {
       alert(error.message || 'Ошибка подтверждения документа')
     }
@@ -120,7 +138,7 @@ function DocumentsViewPageContent() {
       }
       const newStatus = doc?.status === 'rejected' ? 'pending' : 'rejected'
       await api.updateDocumentStatus(docId, newStatus)
-      await loadDocuments(selectedUserId || undefined)
+      await refreshDocuments()
     } catch (error: any) {
       alert(error.message || 'Ошибка отклонения документа')
     }
@@ -133,22 +151,22 @@ function DocumentsViewPageContent() {
 
     try {
       await api.deleteDocument(docId)
-      await loadDocuments(selectedUserId || undefined)
+      await refreshDocuments()
     } catch (error: any) {
       alert(error.message || 'Ошибка удаления документа')
     }
   }
 
   const handleBatchDownloadUploads = async () => {
-    if (!selectedUserId || uploads.length === 0) {
+    if (!selectedTeamId || teamDishUploads.length === 0) {
       alert('Нет файлов для скачивания')
       return
     }
     setBatchDownloadingUploads(true)
     try {
       const token = getToken()
-      for (let i = 0; i < uploads.length; i++) {
-        const u = uploads[i]
+      for (let i = 0; i < teamDishUploads.length; i++) {
+        const u = teamDishUploads[i]
         const response = await fetch(`/api/uploads/${u.id}/download`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -163,7 +181,7 @@ function DocumentsViewPageContent() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        if (i < uploads.length - 1) await new Promise(r => setTimeout(r, 400))
+        if (i < teamDishUploads.length - 1) await new Promise(r => setTimeout(r, 400))
       }
     } catch (error: any) {
       alert(error.message || 'Ошибка скачивания файлов')
@@ -343,38 +361,65 @@ function DocumentsViewPageContent() {
               Документы участников
             </h1>
             <p className="text-sm text-[#71717B]">
-              Просмотр и управление документами участников
+              Сначала выберите команду — командные материалы (блюда, меню). Затем при необходимости сузьте личные документы по участнику.
             </p>
           </div>
 
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
-            <div className="flex-1">
+          <div className="mb-6 flex flex-col lg:flex-row lg:items-end gap-4">
+            <div className="flex-1 min-w-0">
               <label className="block text-sm font-semibold text-black mb-2">
-                Фильтр по участнику
+                1. Команда
               </label>
               <select
-              value={selectedUserId || ''}
-              onChange={(e) => setSelectedUserId(e.target.value || null)}
-              className="w-full sm:w-auto px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:border-transparent"
-            >
-              <option value="">Все участники</option>
-              {participants.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.fio} ({p.email})
+                value={selectedTeamId}
+                onChange={(e) => {
+                  setSelectedTeamId(e.target.value)
+                  setSelectedMemberId('')
+                }}
+                className="w-full max-w-xl px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:border-transparent"
+              >
+                <option value="">Все команды</option>
+                {[...teams]
+                  .sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="flex-1 min-w-0">
+              <label className="block text-sm font-semibold text-black mb-2">
+                2. Участник (личные документы)
+              </label>
+              <select
+                value={selectedMemberId}
+                onChange={(e) => setSelectedMemberId(e.target.value)}
+                disabled={!selectedTeamId}
+                className="w-full max-w-xl px-4 py-2 bg-white border border-[#E2E8F0] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#0F172A] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {selectedTeamId ? 'Все участники команды' : 'Сначала выберите команду'}
                 </option>
-              ))}
-            </select>
+                {(selectedTeam?.members ?? []).map((m) => (
+                  <option key={m.id} value={m.user.id}>
+                    {m.user.fio} ({m.user.email})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
-          {selectedUserId && (
+          {selectedTeamId && (
             <div className="mb-8">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-black">Загрузки блюд (Фото/ТК)</h2>
-                  <p className="text-sm text-[#71717B]">Файлы, загруженные участником в разделе «Загрузки»</p>
+                  <h2 className="text-lg font-semibold text-black">Командные материалы</h2>
+                  <p className="text-sm text-[#71717B]">
+                    Фото блюд, технологические карты и меню — общие для команды (загрузки из раздела «Загрузки»)
+                  </p>
                 </div>
-                {uploads.length > 0 && (
+                {teamDishUploads.length > 0 && (
                   <button
                     onClick={handleBatchDownloadUploads}
                     disabled={batchDownloadingUploads}
@@ -385,13 +430,13 @@ function DocumentsViewPageContent() {
                 )}
               </div>
 
-              {uploads.length === 0 ? (
+              {teamDishUploads.length === 0 ? (
                 <div className="text-center py-8 border border-[#E9EEF4] rounded-[16px]">
-                  <p className="text-sm text-[#71717B]">Файлы не найдены</p>
+                  <p className="text-sm text-[#71717B]">Командных файлов пока нет</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {uploads.map((u) => (
+                  {teamDishUploads.map((u) => (
                     <div
                       key={u.id}
                       className="border border-[#E9EEF4] rounded-[16px] p-4 sm:p-5"
@@ -432,6 +477,13 @@ function DocumentsViewPageContent() {
               )}
             </div>
           )}
+
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-black mb-1">Личные документы участников</h2>
+            <p className="text-sm text-[#71717B] mb-4">
+              Паспорт, медкнижка, согласия и т.д. — привязаны к конкретному участнику. Без выбора команды показываются все; с командой — только её состав; можно сузить до одного человека.
+            </p>
+          </div>
 
           <div className="space-y-3 sm:space-y-4">
             {documents.length === 0 ? (

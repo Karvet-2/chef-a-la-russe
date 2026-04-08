@@ -17,6 +17,7 @@ export default function UploadsPage() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading) {
@@ -51,6 +52,19 @@ export default function UploadsPage() {
     return parts.length > 1 ? parts.slice(1).join('-') : fileName
   }
 
+  const handleDeleteUpload = async (uploadId: string) => {
+    if (!confirm('Открепить этот файл? Его можно будет загрузить снова.')) return
+    try {
+      setDeletingId(uploadId)
+      await api.deleteUpload(uploadId)
+      await loadData()
+    } catch (error: any) {
+      alert(error.message || 'Не удалось открепить файл')
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
   const handleFileUpload = async (
     dishNumber: number,
     fileType: 'photo' | 'techCard' | 'menu',
@@ -72,10 +86,11 @@ export default function UploadsPage() {
   }
 
   const getUploadStatus = (dishNumber: number, fileType: 'photo' | 'techCard') => {
-    return uploads.some(u => u.dishNumber === dishNumber && u.fileType === fileType && u.status === 'confirmed')
+    return uploads.some((u) => u.dishNumber === dishNumber && u.fileType === fileType)
   }
 
   const getMenuUpload = () => uploads.find((u) => u.fileType === 'menu' && u.dishNumber === 0)
+  const menuUpload = getMenuUpload()
 
   const dishCount = team ? activeStageDishCount(team) : 3
   const dishNumbers = Array.from({ length: dishCount }, (_, i) => i + 1)
@@ -165,7 +180,7 @@ export default function UploadsPage() {
                         {/* Технологическая карта */}
                         <label
                           className={`border border-[#E9EEF4] rounded-[19px] p-4 block cursor-pointer transition-colors ${
-                            uploadingFile ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#F9FAFB]'
+                            uploadingFile || !team ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#F9FAFB]'
                           }`}
                         >
                           <input
@@ -199,16 +214,32 @@ export default function UploadsPage() {
                             {dish.hasTechCard ? 'Файл загружен (PDF/DOC)' : 'PDF/DOC • нажмите, чтобы загрузить'}
                           </p>
                           {techUpload && (
-                            <p className="mt-1 text-[11px] font-medium text-[#0F172A] truncate">
-                              {getFileDisplayName(techUpload.fileName)}
-                            </p>
+                            <div className="mt-1 flex items-center gap-2 min-w-0">
+                              <p className="text-[11px] font-medium text-[#0F172A] truncate flex-1 min-w-0">
+                                {getFileDisplayName(techUpload.fileName)}
+                              </p>
+                              {team && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    handleDeleteUpload(techUpload.id)
+                                  }}
+                                  disabled={deletingId === techUpload.id}
+                                  className="shrink-0 text-[11px] font-semibold text-[#B91C1C] hover:underline disabled:opacity-50"
+                                >
+                                  {deletingId === techUpload.id ? '…' : 'Открепить'}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </label>
 
                         {/* Фото блюда */}
                         <label
                           className={`border border-[#E9EEF4] rounded-[19px] p-4 block cursor-pointer transition-colors ${
-                            uploadingFile ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#F9FAFB]'
+                            uploadingFile || !team ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#F9FAFB]'
                           }`}
                         >
                           <input
@@ -242,9 +273,25 @@ export default function UploadsPage() {
                             {dish.hasPhoto ? 'Файл загружен (JPG/PNG)' : 'JPG/PNG • нажмите, чтобы загрузить'}
                           </p>
                           {photoUpload && (
-                            <p className="mt-1 text-[11px] font-medium text-[#0F172A] truncate">
-                              {getFileDisplayName(photoUpload.fileName)}
-                            </p>
+                            <div className="mt-1 flex items-center gap-2 min-w-0">
+                              <p className="text-[11px] font-medium text-[#0F172A] truncate flex-1 min-w-0">
+                                {getFileDisplayName(photoUpload.fileName)}
+                              </p>
+                              {team && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    handleDeleteUpload(photoUpload.id)
+                                  }}
+                                  disabled={deletingId === photoUpload.id}
+                                  className="shrink-0 text-[11px] font-semibold text-[#B91C1C] hover:underline disabled:opacity-50"
+                                >
+                                  {deletingId === photoUpload.id ? '…' : 'Открепить'}
+                                </button>
+                              )}
+                            </div>
                           )}
                         </label>
                       </div>
@@ -269,10 +316,22 @@ export default function UploadsPage() {
                   <p className="text-[12.77px] font-medium text-[#71717B] mb-4">
                     PDF/DOC • загрузите меню команды
                   </p>
-                  {getMenuUpload() && (
-                    <p className="text-[12px] font-semibold text-[#0F172A] truncate mb-3">
-                      {getFileDisplayName(getMenuUpload()!.fileName)}
-                    </p>
+                  {menuUpload && (
+                    <div className="flex items-center gap-2 mb-3 min-w-0">
+                      <p className="text-[12px] font-semibold text-[#0F172A] truncate flex-1 min-w-0">
+                        {getFileDisplayName(menuUpload.fileName)}
+                      </p>
+                      {team && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteUpload(menuUpload.id)}
+                          disabled={deletingId === menuUpload.id}
+                          className="shrink-0 text-[12px] font-semibold text-[#B91C1C] hover:underline disabled:opacity-50"
+                        >
+                          {deletingId === menuUpload.id ? '…' : 'Открепить'}
+                        </button>
+                      )}
+                    </div>
                   )}
                   <label className={`flex items-center justify-center gap-3 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13.67px] font-semibold transition-colors w-full cursor-pointer group ${uploadingFile || !team ? 'opacity-60 cursor-not-allowed' : ''}`}>
                     <input

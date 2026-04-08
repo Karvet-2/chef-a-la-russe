@@ -279,6 +279,22 @@ export const api = {
     return handleResponse<Upload>(response)
   },
 
+  async deleteUpload(uploadId: string): Promise<void> {
+    const response = await fetch(`/api/uploads/${uploadId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+    await handleResponse<void>(response)
+  },
+
+  /** Материалы по блюдам команды (участник, судья с листом, организатор) */
+  async getTeamDishUploads(teamId: string): Promise<UploadWithUser[]> {
+    const response = await fetch(`/api/organizer/teams/${teamId}/uploads`, {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    })
+    return handleResponse<UploadWithUser[]>(response)
+  },
+
   async getOrganizerUploads(userId?: string): Promise<UploadWithUser[]> {
     const url = userId ? `/api/organizer/uploads?userId=${userId}` : '/api/organizer/uploads'
     const response = await fetch(url, {
@@ -549,10 +565,15 @@ export const api = {
     await handleResponse<void>(response)
   },
 
-  async getParticipantDocuments(userId?: string): Promise<(Document & { user: { id: string; fio: string; email: string } })[]> {
-    const url = userId 
-      ? `/api/organizer/documents?userId=${userId}`
-      : '/api/organizer/documents'
+  async getParticipantDocuments(
+    userId?: string,
+    teamId?: string
+  ): Promise<(Document & { user: { id: string; fio: string; email: string } })[]> {
+    const params = new URLSearchParams()
+    if (userId) params.set('userId', userId)
+    if (teamId) params.set('teamId', teamId)
+    const q = params.toString()
+    const url = q ? `/api/organizer/documents?${q}` : '/api/organizer/documents'
     const response = await fetch(url, {
       headers: { Authorization: `Bearer ${getToken()}` },
     })

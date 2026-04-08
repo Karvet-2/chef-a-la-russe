@@ -9,10 +9,34 @@ export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const userId = searchParams.get('userId')
+    const teamId = searchParams.get('teamId')
 
     let whereClause: any = {}
-    
-    if (userId) {
+
+    if (teamId) {
+      const team = await prisma.team.findUnique({ where: { id: teamId }, select: { id: true } })
+      if (!team) {
+        return NextResponse.json({ error: 'Команда не найдена' }, { status: 404 })
+      }
+      const members = await prisma.teamMember.findMany({
+        where: { teamId },
+        select: { userId: true },
+      })
+      const memberIds = members.map((m) => m.userId)
+      if (memberIds.length === 0) {
+        whereClause.userId = { in: [] }
+      } else if (userId) {
+        if (!memberIds.includes(userId)) {
+          return NextResponse.json(
+            { error: 'Участник не входит в выбранную команду' },
+            { status: 400 }
+          )
+        }
+        whereClause.userId = userId
+      } else {
+        whereClause.userId = { in: memberIds }
+      }
+    } else if (userId) {
       whereClause.userId = userId
     }
 

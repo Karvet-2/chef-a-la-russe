@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@backend/lib/prisma'
-import { requireAuth } from '@backend/lib/middleware'
+import { prisma } from '@/lib/prisma'
+import { requireAuth } from '@/lib/middleware'
 import { canAccessTeamUploadContent } from '@backend/lib/team-upload-access'
-import { readFile } from 'fs/promises'
+import { unlink } from 'fs/promises'
 import { join } from 'path'
-import { getUploadsRoot } from '@backend/lib/upload-paths'
 
-const UPLOAD_DIR = join(getUploadsRoot(), 'files')
+const UPLOAD_DIR = join(process.cwd(), 'uploads', 'files')
 
-export async function GET(
+export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
@@ -18,14 +17,12 @@ export async function GET(
   try {
     const resolvedParams = await Promise.resolve(params)
     const uploadId = resolvedParams.id
-
     if (!uploadId) {
       return NextResponse.json({ error: 'Upload ID is required' }, { status: 400 })
     }
 
     const upload = await prisma.upload.findUnique({
       where: { id: uploadId },
-      select: { id: true, teamId: true, fileName: true },
     })
 
     if (!upload) {
@@ -37,19 +34,18 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const filePath = join(UPLOAD_DIR, upload.fileName)
-    const fileBuffer = await readFile(filePath)
+    try {
+      const filePath = join(UPLOAD_DIR, upload.fileName)
+      await unlink(filePath)
+    } catch {
+      // файл уже удалён с диска — запись всё равно убираем
+    }
 
-    return new NextResponse(fileBuffer, {
-      headers: {
-        'Content-Type': 'application/octet-stream',
-        'Content-Disposition': `attachment; filename="${encodeURIComponent(upload.fileName)}"`,
-      },
-    })
+    await prisma.upload.delete({ where: { id: uploadId } })
+
+    return NextResponse.json({ ok: true })
   } catch (error: any) {
-    console.error('Download upload error:', error)
-    const errorMessage = error?.message || 'Internal server error'
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    console.error('Delete upload error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

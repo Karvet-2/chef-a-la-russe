@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import OrganizerHeader from '@/components/organizer/OrganizerHeader'
 import Link from 'next/link'
 import { useAuth } from '@/contexts/AuthContext'
-import { api, Result, User, ViolationPhoto, getToken } from '@/lib/api'
+import { api, Result, User, ViolationPhoto, UploadWithUser, getToken } from '@/lib/api'
 import { activeStageDishCount } from '@backend/lib/dish-count'
 
 type CriterionKey =
@@ -140,6 +140,8 @@ export default function JudgeDetailsPage() {
   const [isFixed, setIsFixed] = useState(false)
   const [stage, setStage] = useState<'qualifier' | 'final'>('qualifier')
   const [dishCount, setDishCount] = useState(3)
+  const [teamDishUploads, setTeamDishUploads] = useState<UploadWithUser[]>([])
+  const [deletingUploadId, setDeletingUploadId] = useState<string | null>(null)
 
   /** Админ может править любой лист; судья (организатор) — только свой */
   const canEdit = user?.role === 'admin' || user?.id === judgeId
@@ -158,12 +160,14 @@ export default function JudgeDetailsPage() {
 
   const loadData = async () => {
     try {
-      const [teamData, judgesData, resultsData] = await Promise.all([
+      const [teamData, judgesData, resultsData, dishUploadsData] = await Promise.all([
         api.getOrganizerTeam(teamId),
         api.getOrganizerJudges(),
         api.getJudgeResultsByStage(teamId, judgeId, 'qualifier'),
+        api.getTeamDishUploads(teamId).catch(() => [] as UploadWithUser[]),
       ])
-      
+
+      setTeamDishUploads(dishUploadsData)
       setTeam(teamData)
       const teamStage: 'qualifier' | 'final' = teamData?.stage === 'final' ? 'final' : 'qualifier'
       setStage(teamStage)
@@ -251,6 +255,24 @@ export default function JudgeDetailsPage() {
       console.error('Error loading data:', error)
     } finally {
       setDataLoading(false)
+    }
+  }
+
+  const getUploadDisplayName = (storedName: string) => {
+    const parts = storedName.split('-')
+    return parts.length > 1 ? parts.slice(1).join('-') : storedName
+  }
+
+  const handleDetachTeamUpload = async (uploadId: string) => {
+    if (!confirm('Открепить этот файл от команды? Его можно будет загрузить снова.')) return
+    try {
+      setDeletingUploadId(uploadId)
+      await api.deleteUpload(uploadId)
+      await loadData()
+    } catch (error: any) {
+      alert(error.message || 'Не удалось открепить файл')
+    } finally {
+      setDeletingUploadId(null)
     }
   }
 
@@ -490,6 +512,43 @@ export default function JudgeDetailsPage() {
               Режим просмотра: вы смотрите лист другого судьи. Изменять оценки и фиксацию может только владелец листа или администратор.
             </div>
           )}
+
+          <div className="mb-6 border border-[#E9EEF4] rounded-[16px] p-4 bg-[#F8FAFC]">
+            <h3 className="text-sm font-semibold text-black mb-2">Материалы по блюдам команды</h3>
+            {teamDishUploads.length === 0 ? (
+              <p className="text-xs text-[#71717B]">Нет загрузок по блюдам и меню.</p>
+            ) : (
+              <ul className="space-y-2">
+                {teamDishUploads.map((u) => (
+                  <li
+                    key={u.id}
+                    className="flex flex-wrap items-center justify-between gap-2 text-xs sm:text-sm border-b border-[#E2E8F0] last:border-0 pb-2 last:pb-0"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="font-medium text-black">
+                        {u.fileType === 'menu'
+                          ? 'Меню'
+                          : u.fileType === 'techCard'
+                            ? `Блюдо ${u.dishNumber} · ТК`
+                            : `Блюдо ${u.dishNumber} · Фото`}
+                      </span>
+                      <span className="text-[#71717B] mx-1">—</span>
+                      <span className="text-[#0F172A]">{getUploadDisplayName(u.fileName)}</span>
+                      <span className="text-[#94a3b8] ml-1">({u.user.fio})</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDetachTeamUpload(u.id)}
+                      disabled={deletingUploadId === u.id}
+                      className="shrink-0 text-xs font-semibold text-[#B91C1C] hover:underline disabled:opacity-50"
+                    >
+                      {deletingUploadId === u.id ? '…' : 'Открепить'}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
           <div className="space-y-6">
             <div className="border-2 border-[#E9EEF4] rounded-[21px] overflow-hidden">
