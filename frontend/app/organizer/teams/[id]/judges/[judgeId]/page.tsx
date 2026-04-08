@@ -294,29 +294,30 @@ export default function JudgeDetailsPage() {
       />
       <OrganizerHeader />
       
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
-          <div className="mb-6 flex items-start justify-between">
-            <div>
-              <p className="text-[#71717B] text-sm mb-2">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-4 sm:py-8 md:py-10 pb-safe">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-4 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
+          <div className="mb-5 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="text-[#71717B] text-xs sm:text-sm mb-1.5">
                 Команда
               </p>
-              <h1 className="text-[23px] font-semibold text-black mb-2 underline decoration-[#0F172A] decoration-1">
+              <h1 className="text-lg sm:text-[23px] font-semibold text-black mb-1.5 underline decoration-[#0F172A] decoration-1 break-words">
                 {team?.name || 'Неизвестно'}
               </h1>
-              <p className="text-[#71717B] text-sm">
+              <p className="text-[#71717B] text-xs sm:text-sm">
                 {getJudgeLoginLabel(judge)}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-2">
-              <div className="bg-[#0F172A] text-white px-6 py-3 rounded-[8px] text-right">
-                <div className="text-[18px] font-semibold">
+            <div className="flex flex-row sm:flex-col items-stretch sm:items-end justify-between sm:justify-start gap-2 sm:gap-2 w-full sm:w-auto shrink-0">
+              <div className="bg-[#0F172A] text-white px-4 py-2.5 sm:px-6 sm:py-3 rounded-[8px] text-center sm:text-right flex-1 sm:flex-none">
+                <p className="text-[10px] sm:text-xs font-medium text-white/80 uppercase tracking-wide">Средний балл</p>
+                <div className="text-base sm:text-[18px] font-semibold tabular-nums">
                   {getOverallAverage().toFixed(2)} / 100
                 </div>
               </div>
               <Link
                 href={`/organizer/teams/${teamId}`}
-                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+                className="inline-flex items-center justify-center bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2.5 rounded-[8px] text-sm font-semibold transition-colors min-h-[44px] sm:min-h-0 touch-manipulation"
               >
                 Назад
               </Link>
@@ -329,19 +330,24 @@ export default function JudgeDetailsPage() {
             </div>
           )}
 
-          <div className="space-y-6">
-            <div className="border-2 border-[#E9EEF4] rounded-[21px] overflow-hidden">
-              <table className="w-full">
+          <div className="space-y-5 sm:space-y-6">
+            <p className="sm:hidden text-xs text-[#64748B] flex items-center gap-1.5">
+              <span className="inline-block w-4 h-px bg-slate-300" aria-hidden />
+              Таблицу можно листать горизонтально
+            </p>
+            <div className="organizer-table-wrap border-2 shadow-none sm:shadow-sm">
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-px">
+                <table className="w-full min-w-[720px] sm:min-w-0">
                 <thead>
                   <tr className="bg-[#F1F5F9]">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-[#71717B]">Критерий</th>
+                    <th className="sticky left-0 z-10 bg-[#F1F5F9] px-3 py-3 sm:px-6 sm:py-4 text-left text-xs sm:text-sm font-semibold text-[#71717B] min-w-[140px] sm:min-w-0 shadow-[2px_0_8px_-2px_rgba(0,0,0,0.08)]">Критерий</th>
                     {dishNumbers.map(d => (
-                      <th key={d} className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[180px]">
+                      <th key={d} className="px-2 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-semibold text-[#71717B] whitespace-nowrap">
                         Блюдо {d}
                       </th>
                     ))}
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-[#71717B] w-[120px]">
-                      Σ по блюдам
+                    <th className="px-2 py-3 sm:px-6 sm:py-4 text-center text-xs sm:text-sm font-semibold text-[#71717B] whitespace-nowrap">
+                      Σ
                     </th>
                   </tr>
                 </thead>
@@ -354,21 +360,22 @@ export default function JudgeDetailsPage() {
                     return (
                       <React.Fragment key={criterion.key}>
                         <tr>
-                          <td className="px-6 py-4 border-b-0">
+                          <td className="sticky left-0 z-[1] bg-white px-3 py-3 sm:px-6 sm:py-4 border-b-0 align-top shadow-[2px_0_8px_-2px_rgba(0,0,0,0.06)]">
                             <div>
-                              <h3 className="text-[16px] font-semibold text-black mb-1">
+                              <h3 className="text-sm sm:text-[16px] font-semibold text-black mb-1 leading-snug">
                                 {criterion.title}
                               </h3>
-                              <p className="text-xs text-[#71717B]">
-                                max: {criterion.max} за блюдо
+                              <p className="text-[10px] sm:text-xs text-[#71717B]">
+                                max {criterion.max}/блюдо
                               </p>
                             </div>
                           </td>
                           {dishNumbers.map((dishNumber) => (
-                            <td key={dishNumber} className="px-6 py-4 text-center border-b-0">
-                              <div className="flex items-center justify-center gap-1">
+                            <td key={dishNumber} className="px-2 py-3 sm:px-6 sm:py-4 text-center border-b-0 align-middle">
+                              <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                                 <input
                                   type="number"
+                                  inputMode="decimal"
                                   min="0"
                                   max={criterion.max}
                                   value={formData[criterion.key][dishNumber] || 0}
@@ -384,22 +391,22 @@ export default function JudgeDetailsPage() {
                                     }))
                                   }}
                                   disabled={isFixed || !canEdit}
-                                  className="w-16 px-3 py-2 border border-[#E9EEF4] rounded-lg text-sm text-center disabled:bg-gray-100 disabled:cursor-not-allowed bg-white"
+                                  className="w-[3.25rem] sm:w-16 min-h-[44px] sm:min-h-0 px-1.5 sm:px-3 py-2 border border-[#E9EEF4] rounded-lg text-sm text-center disabled:bg-gray-100 disabled:cursor-not-allowed bg-white touch-manipulation"
                                 />
-                                <span className="text-sm text-[#71717B]">
+                                <span className="text-xs sm:text-sm text-[#71717B] tabular-nums">
                                   /{criterion.max}
                                 </span>
                               </div>
                             </td>
                           ))}
-                          <td className="px-6 py-4 text-center border-b-0">
-                            <div className="text-[16px] font-semibold text-black">
+                          <td className="px-2 py-3 sm:px-6 sm:py-4 text-center border-b-0 align-middle">
+                            <div className="text-sm sm:text-[16px] font-semibold text-black tabular-nums">
                               {total} / {max}
                             </div>
                           </td>
                         </tr>
                         <tr>
-                          <td colSpan={dishCount + 2} className="px-6 py-4 bg-white border-t-0">
+                          <td colSpan={dishCount + 2} className="px-3 py-4 sm:px-6 bg-white border-t border-[#F1F5F9]">
                             <div className="space-y-4">
                               <div>
                                 <label className="block text-sm font-semibold text-black mb-2">
@@ -432,22 +439,23 @@ export default function JudgeDetailsPage() {
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
 
-            <div className="border-2 border-[#E9EEF4] rounded-[21px] p-6 bg-gray-50">
-              <h3 className="text-[18px] font-semibold text-black mb-4">Итог по команде</h3>
-              <p className="text-sm text-[#71717B] mb-3">
+            <div className="border-2 border-[#E9EEF4] rounded-[16px] sm:rounded-[21px] p-4 sm:p-6 bg-gray-50">
+              <h3 className="text-base sm:text-[18px] font-semibold text-black mb-2 sm:mb-4">Итог по команде</h3>
+              <p className="text-xs sm:text-sm text-[#71717B] mb-3 leading-relaxed">
                 По регламенту за каждое блюдо — до 100 баллов; итоговый показатель — среднее по блюдам.
               </p>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex flex-wrap gap-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
                   {dishNumbers.map((d) => (
-                    <div key={d} className="text-sm font-semibold text-black">
+                    <div key={d} className="text-sm font-semibold text-black tabular-nums">
                       Блюдо {d}: {getDishTotal(d).toFixed(1)} / 100
                     </div>
                   ))}
                 </div>
-                <div className="text-[18px] font-semibold text-[#0F172A]">
+                <div className="text-base sm:text-[18px] font-semibold text-[#0F172A] pt-1 border-t border-slate-200/80 sm:border-0 sm:pt-0 tabular-nums">
                   Средний балл: {getOverallAverage().toFixed(2)} / 100
                 </div>
               </div>
@@ -455,11 +463,11 @@ export default function JudgeDetailsPage() {
           </div>
 
           {canEdit && (
-            <div className="mt-8 flex gap-4 justify-end">
+            <div className="mt-6 sm:mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end sm:gap-4">
               <button
                 onClick={handleSave}
                 disabled={saving || isFixed}
-                className="flex items-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex w-full sm:w-auto items-center justify-center gap-2 bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-6 py-3.5 sm:py-3 rounded-[8px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] touch-manipulation"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
@@ -470,7 +478,7 @@ export default function JudgeDetailsPage() {
                 <button
                   onClick={handleUnfixSheet}
                   disabled={saving}
-                  className="flex items-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-3 rounded-[6px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex w-full sm:w-auto items-center justify-center gap-2 bg-[#F59E0B] hover:bg-[#D97706] text-white px-6 py-3.5 sm:py-3 rounded-[8px] text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] touch-manipulation"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
@@ -481,7 +489,7 @@ export default function JudgeDetailsPage() {
                 <button
                   onClick={handleFixSheet}
                   disabled={saving}
-                  className="flex items-center gap-2 bg-[#0F172A] text-white px-6 py-3 rounded-[6px] text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex w-full sm:w-auto items-center justify-center gap-2 bg-[#0F172A] text-white px-6 py-3.5 sm:py-3 rounded-[8px] text-sm font-semibold hover:bg-[#1e293b] transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] touch-manipulation"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />

@@ -1,4 +1,4 @@
- 'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -61,8 +61,8 @@ export default function OrganizerResultsPage() {
     <div className="min-h-screen">
       <OrganizerHeader />
 
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-4 sm:py-8 md:py-10 pb-safe">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-4 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <p className="text-xs sm:text-sm font-medium text-[#71717B] mb-2">
@@ -82,8 +82,9 @@ export default function OrganizerResultsPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
+            <div className="organizer-table-wrap">
+              <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+              <table className="w-full min-w-[480px] sm:min-w-0 border-collapse">
                 <thead>
                   <tr className="border-b border-[#E2E8F0]">
                     <th className="py-3 px-3 text-left text-sm font-semibold text-black">Место</th>
@@ -109,6 +110,7 @@ export default function OrganizerResultsPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

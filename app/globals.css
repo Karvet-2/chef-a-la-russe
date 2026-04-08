@@ -100,6 +100,26 @@ a {
     background-repeat: repeat;
     background-size: 140px 140px;
   }
+
+  @media (max-width: 639px) {
+    .bg-organizer-page-pattern {
+      background-size: 96px 96px;
+    }
+  }
+
+  /** Обёртка таблиц: рамка и скролл на вложенном блоке (см. overflow-x-auto в разметке) */
+  .organizer-table-wrap {
+    @apply rounded-xl border border-[#E9EEF4] bg-white;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
 }
 
 img[src$=".png"],

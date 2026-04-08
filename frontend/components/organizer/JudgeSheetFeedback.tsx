@@ -39,7 +39,7 @@ export function JudgeSheetToast({
   return (
     <div
       role="status"
-      className={`pointer-events-auto fixed bottom-6 right-6 z-[200] flex max-w-md items-start gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 ${palette.wrap}`}
+      className={`pointer-events-auto fixed z-[200] flex items-start gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 left-4 right-4 bottom-[max(1rem,env(safe-area-inset-bottom,12px))] sm:left-auto sm:right-6 sm:bottom-6 sm:max-w-md ${palette.wrap}`}
     >
       {variant === 'success' ? (
         <svg className={`mt-0.5 h-5 w-5 shrink-0 ${palette.icon}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,30 +100,30 @@ export function JudgeSheetConfirm({
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-[190] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[190] flex items-end justify-center p-0 sm:items-center sm:p-4 pb-safe">
       <button type="button" className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" onClick={onCancel} aria-label="Закрыть" />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="judge-sheet-confirm-title"
-        className="relative z-10 w-full max-w-md rounded-2xl border border-[#E9EEF4] bg-white p-6 shadow-xl"
+        className="relative z-10 w-full max-w-md rounded-t-2xl border border-[#E9EEF4] border-b-0 bg-white p-5 shadow-xl sm:rounded-2xl sm:border-b sm:p-6 max-h-[min(90vh,520px)] overflow-y-auto sm:max-h-[min(90vh,600px)]"
       >
-        <h2 id="judge-sheet-confirm-title" className="text-lg font-semibold text-black">
+        <h2 id="judge-sheet-confirm-title" className="text-lg font-semibold text-black pr-6">
           {title}
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-[#71717B]">{message}</p>
-        <div className="mt-6 flex flex-wrap justify-end gap-3">
+        <div className="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3">
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-[#E9EEF4] bg-[#F8FAFC] px-4 py-2 text-sm font-semibold text-black transition hover:bg-[#F1F5F9]"
+            className="w-full rounded-xl border border-[#E9EEF4] bg-[#F8FAFC] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#F1F5F9] sm:w-auto sm:py-2 touch-manipulation min-h-[44px] sm:min-h-0"
           >
             {cancelLabel ?? 'Отмена'}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+            className={`w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition sm:w-auto sm:py-2 touch-manipulation min-h-[44px] sm:min-h-0 ${
               danger ? 'bg-red-600 hover:bg-red-700' : 'bg-[#0F172A] hover:bg-[#1e293b]'
             }`}
           >

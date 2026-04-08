@@ -65,8 +65,8 @@ export default function OrganizerHome() {
     <div className="min-h-screen">
       <OrganizerHeader />
       
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[114px] py-6 sm:py-8 md:py-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[114px] py-4 sm:py-8 md:py-10 pb-safe">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-4 sm:p-7 md:p-8 lg:p-10">
           <div className="flex flex-col md:flex-row justify-center gap-4 sm:gap-5 md:gap-6">
             <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 w-full md:w-[365px] flex flex-col">
               <h2 className="text-[14.5px] sm:text-[15px] md:text-[16px] font-semibold text-[#0F172A] mb-4 sm:mb-5 text-center">

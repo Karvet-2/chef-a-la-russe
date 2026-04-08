@@ -91,9 +91,9 @@ export default function OrganizerTeamsPage() {
     <div className="min-h-screen">
       <OrganizerHeader />
       
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-4 sm:py-8 md:py-10 pb-safe">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-4 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
+          <div className="mb-5 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h1 className="text-lg sm:text-xl md:text-[23px] font-semibold text-black mb-2">
                 Команды
@@ -107,7 +107,7 @@ export default function OrganizerTeamsPage() {
                 setShowCreateModal(true)
                 loadParticipants()
               }}
-              className="flex items-center gap-2"
+              className="flex w-full sm:w-auto items-center justify-center gap-2 min-h-[48px] touch-manipulation"
             >
               <span>+ Создать команду</span>
             </Button>
@@ -133,9 +133,9 @@ export default function OrganizerTeamsPage() {
                   key={team.id}
                   className="bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8"
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="text-[16px] font-semibold text-black mb-3">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[15px] sm:text-[16px] font-semibold text-black mb-2 sm:mb-3 break-words">
                         {team.name}
                       </h3>
                       <p className="text-xs font-medium text-[#334155] mb-2">
@@ -149,20 +149,20 @@ export default function OrganizerTeamsPage() {
                           : 'Нет участников'}
                       </p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-row items-center justify-between gap-3 sm:justify-end sm:gap-4 w-full sm:w-auto">
                       {team.avgScore && (
-                        <div className="flex flex-col items-end">
-                          <span className="text-[13px] font-medium text-[#71717B]">
+                        <div className="flex flex-col items-start sm:items-end">
+                          <span className="text-xs sm:text-[13px] font-medium text-[#71717B]">
                             Ср. по судьям
                           </span>
-                          <span className="text-[16px] font-semibold text-black">
+                          <span className="text-[15px] sm:text-[16px] font-semibold text-black tabular-nums">
                             {team.avgScore}/100
                           </span>
                         </div>
                       )}
                       <Link
                         href={`/organizer/teams/${team.id}`}
-                        className="flex items-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13px] font-semibold transition-colors group"
+                        className="flex flex-1 sm:flex-none items-center justify-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[8px] px-4 py-3 sm:py-2.5 text-[13px] font-semibold transition-colors group min-h-[44px] sm:min-h-0 touch-manipulation"
                       >
                         <span>Открыть</span>
                         <svg

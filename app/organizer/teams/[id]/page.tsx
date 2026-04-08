@@ -342,25 +342,25 @@ export default function TeamDetailsPage() {
     <div className="min-h-screen">
       <OrganizerHeader />
       
-      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-6 sm:py-8 md:py-10">
-        <div className="bg-white rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-6 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <p className="text-[#71717B] text-sm mb-2">
+      <main className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[110px] py-4 sm:py-8 md:py-10 pb-safe">
+        <div className="bg-white rounded-[20px] sm:rounded-[26px] shadow-[0px_4px_17.9px_rgba(0,0,0,0.19)] p-4 sm:p-7 md:p-8 lg:p-10 mx-auto max-w-[1220px]">
+          <div className="mb-5 sm:mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-[#71717B] text-xs sm:text-sm mb-2">
                 Команда
               </p>
-              <h1 className="text-[23px] font-semibold text-black mb-2 underline decoration-[#0F172A] decoration-1">
+              <h1 className="text-lg sm:text-[23px] font-semibold text-black mb-2 underline decoration-[#0F172A] decoration-1 break-words">
                 {team.name}
               </h1>
-              <p className="text-[#71717B] text-sm">
+              <p className="text-[#71717B] text-xs sm:text-sm">
                 {team.category}
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-2 w-full sm:w-auto">
               <button
                 type="button"
                 onClick={handleOpenEditTeam}
-                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-3 py-2.5 sm:px-4 sm:py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-colors text-center min-h-[44px] sm:min-h-0 touch-manipulation"
               >
                 Редактировать
               </button>
@@ -368,33 +368,33 @@ export default function TeamDetailsPage() {
                 type="button"
                 onClick={handleDeleteTeam}
                 disabled={teamActionLoading}
-                className="bg-red-50 hover:bg-red-600 hover:text-white text-red-800 px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors disabled:opacity-50"
+                className="bg-red-50 hover:bg-red-600 hover:text-white text-red-800 px-3 py-2.5 sm:px-4 sm:py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-colors disabled:opacity-50 text-center min-h-[44px] sm:min-h-0 touch-manipulation"
               >
-                Удалить команду
+                Удалить
               </button>
               <button
                 onClick={handleToggleStage}
                 disabled={stageLoading}
-                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white disabled:opacity-50 text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white disabled:opacity-50 text-black px-3 py-2.5 sm:px-4 sm:py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-colors col-span-2 sm:col-auto text-center min-h-[44px] sm:min-h-0 touch-manipulation"
               >
                 {stageLoading ? '...' : `Этап: ${team.stage === 'final' ? 'Финал' : 'Квалификация'}`}
               </button>
               <button
                 onClick={() => handlePublishResults(!(team.resultsPublished ?? false))}
                 disabled={publishLoading}
-                className={`px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors ${
+                className={`col-span-2 sm:col-auto px-3 py-2.5 sm:px-4 sm:py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-colors text-center min-h-[44px] sm:min-h-0 touch-manipulation ${
                   team.resultsPublished ?? false
                     ? 'bg-[#F1F5F9] text-black hover:bg-[#E2E8F0]'
                     : 'bg-[#0F172A] text-white hover:bg-[#1e293b]'
                 } disabled:opacity-50`}
               >
-                {publishLoading ? '...' : (team.resultsPublished ?? false) ? 'Скрыть результаты' : 'Опубликовать результаты'}
+                {publishLoading ? '...' : (team.resultsPublished ?? false) ? 'Скрыть результаты' : 'Опубликовать'}
               </button>
               <Link
                 href="/organizer/teams"
-                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-4 py-2 rounded-[8px] text-sm font-semibold transition-colors"
+                className="bg-[#F1F5F9] hover:bg-[#0F172A] hover:text-white text-black px-3 py-2.5 sm:px-4 sm:py-2 rounded-[8px] text-xs sm:text-sm font-semibold transition-colors text-center min-h-[44px] sm:min-h-0 flex items-center justify-center touch-manipulation col-span-2 sm:col-auto"
               >
-                Назад
+                Назад к списку
               </Link>
             </div>
           </div>
@@ -410,8 +410,9 @@ export default function TeamDetailsPage() {
                 В команде пока нет участников.
               </p>
             ) : (
-              <div className="overflow-x-auto mb-4">
-                <table className="w-full border-collapse">
+              <div className="organizer-table-wrap mb-4">
+                <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+                <table className="w-full min-w-[520px] sm:min-w-0 border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-[#E2E8F0]">
                       <th className="py-2 px-3 text-left text-sm font-semibold text-black">ФИО</th>
@@ -452,10 +453,11 @@ export default function TeamDetailsPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
 
-            <div className="mt-6 p-5 bg-[#F9FAFB] border border-[#E2E8F0] rounded-[16px]">
+            <div className="mt-6 p-4 sm:p-5 bg-[#F9FAFB] border border-[#E2E8F0] rounded-[16px]">
               <label className="block text-sm font-semibold text-black mb-3">
                 Добавить участника в команду
               </label>
@@ -499,8 +501,9 @@ export default function TeamDetailsPage() {
             ) : team.members.length === 0 ? (
               <p className="text-sm text-[#71717B]">Добавьте участников в команду, чтобы видеть документы.</p>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
+              <div className="organizer-table-wrap">
+                <div className="overflow-x-auto overscroll-x-contain touch-pan-x">
+                <table className="w-full min-w-[560px] sm:min-w-0 border-collapse text-sm">
                   <thead>
                     <tr className="border-b border-[#E2E8F0]">
                       <th className="py-2 px-3 text-left text-sm font-semibold text-black">Участник</th>
@@ -547,6 +550,7 @@ export default function TeamDetailsPage() {
                     })}
                   </tbody>
                 </table>
+                </div>
               </div>
             )}
           </div>
@@ -573,18 +577,18 @@ export default function TeamDetailsPage() {
                     key={judge.judgeId}
                     className="bg-white rounded-[26px] shadow-[0px_4px_17.8px_rgba(0,0,0,0.25)] p-6 sm:p-7 md:p-8"
                   >
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <div>
-                        <h3 className="text-[16px] font-semibold text-black mb-1">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                      <div className="min-w-0">
+                        <h3 className="text-[15px] sm:text-[16px] font-semibold text-black mb-1 break-words">
                           {getJudgeLoginLabel(judge.judgeName, judge.judgeEmail)}
                         </h3>
-                        <p className="text-[13px] font-medium text-[#71717B] mb-2">
+                        <p className="text-xs sm:text-[13px] font-medium text-[#71717B] mb-2">
                           Средний балл по блюдам: {averagePercentage} из 100
                         </p>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
                         <button
-                          className={`px-4 py-2 rounded-[6px] text-[13px] font-semibold ${
+                          className={`px-4 py-2.5 sm:py-2 rounded-[6px] text-xs sm:text-[13px] font-semibold min-h-[44px] sm:min-h-0 touch-manipulation ${
                             isFixed
                               ? 'bg-[#F1F5F9] text-black'
                               : 'bg-[#0F172A] text-white'
@@ -595,7 +599,7 @@ export default function TeamDetailsPage() {
                         </button>
                         <Link
                           href={`/organizer/teams/${teamId}/judges/${judge.judgeId}`}
-                          className="flex items-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13px] font-semibold transition-colors group"
+                          className="flex items-center justify-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-xs sm:text-[13px] font-semibold transition-colors group min-h-[44px] sm:min-h-0 touch-manipulation"
                         >
                           <span>Открыть</span>
                           <svg

@@ -24,10 +24,10 @@ export default function OrganizerHeader() {
   }
   
   return (
-    <header className="w-full bg-white">
-      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-3 sm:py-4 md:py-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2 lg:mb-3">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left">
+    <header className="w-full bg-white/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(15,23,42,0.06)] pt-safe">
+      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-2.5 sm:py-4 md:py-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 lg:mb-3">
+          <h1 className="text-base leading-tight sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left px-1 sm:px-0">
             Кабинет судьи
           </h1>
           <Link href="/organizer" className="hidden shrink-0 justify-center sm:flex sm:justify-end" aria-label="Chef a la Russe">
@@ -36,8 +36,7 @@ export default function OrganizerHeader() {
               alt=""
               width={240}
               height={80}
-              className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
-              style={{ maxHeight: 80, maxWidth: 240 }}
+              className="h-14 sm:h-20 max-h-20 w-auto max-w-[240px] object-contain"
             />
           </Link>
         </div>
@@ -51,10 +50,9 @@ export default function OrganizerHeader() {
               <img
                 src="/logo.svg"
                 alt=""
-                width={240}
-                height={80}
-                className="h-20 max-h-20 w-auto max-w-[240px] object-contain"
-                style={{ maxHeight: 80, maxWidth: 240 }}
+                width={200}
+                height={64}
+                className="h-11 w-auto max-h-11 max-w-[min(200px,55vw)] object-contain sm:h-14 sm:max-h-14"
               />
             </Link>
           </div>
@@ -99,8 +97,9 @@ export default function OrganizerHeader() {
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md hover:bg-gray-100 transition-colors flex-shrink-0"
+            className="lg:hidden p-2.5 min-h-[44px] min-w-[44px] rounded-xl hover:bg-slate-100 active:bg-slate-200 transition-colors flex-shrink-0 touch-manipulation"
             aria-label="Меню"
+            aria-expanded={isMobileMenuOpen}
           >
             <svg
               className="w-6 h-6"
@@ -128,7 +127,7 @@ export default function OrganizerHeader() {
         </div>
 
         {isMobileMenuOpen && (
-          <div className="lg:hidden mt-4 pb-4 border-t border-gray-200 pt-4">
+          <div className="lg:hidden mt-4 pb-6 pb-safe border-t border-gray-200 pt-4">
             <OrganizerNavigation isMobile={true} onNavigate={() => setIsMobileMenuOpen(false)} />
             
             <div className="mt-4 space-y-3">
