@@ -25,16 +25,25 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             status: true,
-          }
+          },
         },
-        uploads: {
+        teamMembers: {
           select: {
-            id: true,
-            dishNumber: true,
-            fileType: true,
-            status: true,
-          }
-        }
+            team: {
+              select: {
+                id: true,
+                uploads: {
+                  select: {
+                    id: true,
+                    dishNumber: true,
+                    fileType: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',

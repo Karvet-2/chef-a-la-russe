@@ -24,17 +24,21 @@ export async function GET(
 
     const upload = await prisma.upload.findUnique({
       where: { id: uploadId },
-      include: { user: { select: { id: true, fio: true } } },
+      select: { id: true, teamId: true, fileName: true },
     })
 
     if (!upload) {
       return NextResponse.json({ error: 'Upload not found' }, { status: 404 })
     }
 
-    const isOwner = upload.userId === authResult.user.id
-    const isAdminOrOrganizer = ['admin', 'organizer'].includes(authResult.user.role)
+    const isStaff = ['admin', 'organizer'].includes(authResult.user.role)
+    const inTeam = isStaff
+      ? true
+      : !!(await prisma.teamMember.findFirst({
+          where: { teamId: upload.teamId, userId: authResult.user.id },
+        }))
 
-    if (!isOwner && !isAdminOrOrganizer) {
+    if (!inTeam) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

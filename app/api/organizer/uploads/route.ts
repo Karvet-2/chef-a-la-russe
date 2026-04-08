@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireRole } from '@/lib/middleware'
+import type { Prisma } from '@prisma/client'
 
 export async function GET(request: NextRequest) {
   const authResult = await requireRole(request, ['organizer', 'admin'])
@@ -10,8 +11,20 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId') || undefined
 
+    let where: Prisma.UploadWhereInput = {}
+    if (userId) {
+      const tm = await prisma.teamMember.findFirst({
+        where: { userId },
+        select: { teamId: true },
+      })
+      if (!tm) {
+        return NextResponse.json([])
+      }
+      where = { teamId: tm.teamId }
+    }
+
     const uploads = await prisma.upload.findMany({
-      where: userId ? { userId } : undefined,
+      where,
       include: {
         user: { select: { id: true, fio: true, email: true } },
       },
@@ -24,4 +37,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
-

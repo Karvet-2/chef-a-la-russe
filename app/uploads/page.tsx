@@ -84,12 +84,10 @@ export default function UploadsPage() {
     const hasTechCard = getUploadStatus(dishNum, 'techCard')
     const hasPhoto = getUploadStatus(dishNum, 'photo')
     const filesCount = [hasTechCard, hasPhoto].filter(Boolean).length
-    const progress = filesCount * 50
 
     return {
       id: dishNum,
       name: `Блюдо ${dishNum}`,
-      progress,
       filesCount: `${filesCount}/2`,
       hasPhoto,
       hasTechCard,
@@ -121,6 +119,12 @@ export default function UploadsPage() {
             <h1 className="text-[22.97px] sm:text-[23.33px] font-semibold text-black mb-2">
               Загрузки
             </h1>
+            {!team && (
+              <p className="text-sm text-[#92400e] bg-[#fffbeb] border border-[#fcd34d] rounded-lg px-4 py-3 mb-4">
+                Файлы по блюдам привязаны к команде: загрузка доступна только после включения вас в состав команды
+                организатором.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -157,25 +161,6 @@ export default function UploadsPage() {
                         </div>
                       </div>
 
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-[12.1px] font-medium text-[#71717B]">
-                            Готовность
-                          </p>
-                          <span className="text-[12.4px] font-medium text-black">
-                            {dish.progress}%
-                          </span>
-                        </div>
-                        <div className="w-full h-[18px] bg-[#F1F5F9] rounded-[9px] relative overflow-hidden">
-                          {dish.progress > 0 && (
-                            <div
-                              className="absolute left-0 top-0 h-full bg-[#0F172A] rounded-[9px] transition-all"
-                              style={{ width: `${dish.progress}%` }}
-                            ></div>
-                          )}
-                        </div>
-                      </div>
-
                       <div className="space-y-3">
                         {/* Технологическая карта */}
                         <label
@@ -187,7 +172,7 @@ export default function UploadsPage() {
                             type="file"
                             accept=".pdf,.doc,.docx"
                             className="hidden"
-                            disabled={uploadingFile}
+                            disabled={uploadingFile || !team}
                             onChange={(e) => handleFileUpload(dish.id, 'techCard', e)}
                           />
                           <div className="flex items-center gap-3 mb-2">
@@ -230,7 +215,7 @@ export default function UploadsPage() {
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            disabled={uploadingFile}
+                            disabled={uploadingFile || !team}
                             onChange={(e) => handleFileUpload(dish.id, 'photo', e)}
                           />
                           <div className="flex items-center gap-3 mb-2">
@@ -289,12 +274,12 @@ export default function UploadsPage() {
                       {getFileDisplayName(getMenuUpload()!.fileName)}
                     </p>
                   )}
-                  <label className={`flex items-center justify-center gap-3 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13.67px] font-semibold transition-colors w-full cursor-pointer group ${uploadingFile ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                  <label className={`flex items-center justify-center gap-3 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13.67px] font-semibold transition-colors w-full cursor-pointer group ${uploadingFile || !team ? 'opacity-60 cursor-not-allowed' : ''}`}>
                     <input
                       type="file"
                       accept=".pdf,.doc,.docx"
                       className="hidden"
-                      disabled={uploadingFile}
+                      disabled={uploadingFile || !team}
                       onChange={(e) => handleFileUpload(0, 'menu', e)}
                     />
                     <img

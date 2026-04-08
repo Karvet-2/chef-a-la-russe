@@ -25,20 +25,29 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             status: true,
-          }
+          },
         },
-        uploads: {
+        teamMembers: {
           select: {
-            id: true,
-            dishNumber: true,
-            fileType: true,
-            status: true,
-          }
-        }
+            team: {
+              select: {
+                id: true,
+                uploads: {
+                  select: {
+                    id: true,
+                    dishNumber: true,
+                    fileType: true,
+                    status: true,
+                  },
+                },
+              },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: 'desc',
-      }
+      },
     })
 
     return NextResponse.json(users)
@@ -75,7 +84,7 @@ export async function PUT(request: NextRequest) {
 
     const existingUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { status: true }
+      select: { status: true },
     })
 
     if (!existingUser) {
@@ -110,7 +119,7 @@ export async function PUT(request: NextRequest) {
         fio: true,
         email: true,
         status: true,
-      }
+      },
     })
 
     return NextResponse.json(user)

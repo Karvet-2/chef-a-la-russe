@@ -8,7 +8,26 @@ import { api, User } from '@/lib/api'
 
 interface ParticipantWithDocs extends User {
   documents?: { id: string; name: string; status: string }[]
-  uploads?: { id: string; dishNumber: number; fileType: string; status: string }[]
+  teamMembers?: Array<{
+    team: {
+      id: string
+      uploads?: { id: string; dishNumber: number; fileType: string; status: string }[]
+    }
+  }>
+}
+
+function participantTeamUploads(p: ParticipantWithDocs) {
+  const out: { id: string; dishNumber: number; fileType: string; status: string }[] = []
+  const seen = new Set<string>()
+  for (const tm of p.teamMembers ?? []) {
+    for (const u of tm.team.uploads ?? []) {
+      if (!seen.has(u.id)) {
+        seen.add(u.id)
+        out.push(u)
+      }
+    }
+  }
+  return out
 }
 
 function getJudgeLoginLabel(judge: User) {
@@ -99,9 +118,9 @@ export default function OrganizerParticipantsPage() {
   }
 
   const hasTechCard = (p: ParticipantWithDocs) =>
-    (p.uploads || []).some((u) => u.fileType === 'techCard')
+    participantTeamUploads(p).some((u) => u.fileType === 'techCard')
   const hasPhoto = (p: ParticipantWithDocs) =>
-    (p.uploads || []).some((u) => u.fileType === 'photo')
+    participantTeamUploads(p).some((u) => u.fileType === 'photo')
   const hasDocuments = (p: ParticipantWithDocs) =>
     (p.documents || []).length > 0
   

@@ -44,6 +44,7 @@ export interface Document {
 
 export interface Upload {
   id: string
+  teamId: string
   userId: string
   dishNumber: number
   fileType: 'photo' | 'techCard' | 'menu'

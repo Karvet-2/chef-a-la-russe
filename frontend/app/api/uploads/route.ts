@@ -13,22 +13,23 @@ export async function GET(request: NextRequest) {
   if (authResult.error) return authResult.error
 
   try {
+    const membership = await prisma.teamMember.findFirst({
+      where: { userId: authResult.user.id },
+      select: { teamId: true },
+    })
+    if (!membership) {
+      return NextResponse.json([])
+    }
+
     const uploads = await prisma.upload.findMany({
-      where: {
-        userId: authResult.user.id,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      }
+      where: { teamId: membership.teamId },
+      orderBy: { createdAt: 'desc' },
     })
 
     return NextResponse.json(uploads)
   } catch (error: any) {
     console.error('Get uploads error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -37,6 +38,19 @@ export async function POST(request: NextRequest) {
   if (authResult.error) return authResult.error
 
   try {
+    const membership = await prisma.teamMember.findFirst({
+      where: { userId: authResult.user.id },
+      include: {
+        team: { select: { id: true, category: true, championshipType: true, stage: true } },
+      },
+    })
+    if (!membership?.team) {
+      return NextResponse.json(
+        { error: 'Нужно состоять в команде, чтобы загружать фото и документы по блюдам' },
+        { status: 403 }
+      )
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File
     const dishNumber = parseInt(formData.get('dishNumber') as string)
@@ -57,21 +71,11 @@ export async function POST(request: NextRequest) {
     }
 
     if (fileType === 'menu' && dishNumber !== 0) {
-      return NextResponse.json(
-        { error: 'For menu, dishNumber must be 0' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'For menu, dishNumber must be 0' }, { status: 400 })
     }
 
+    const t = membership.team
     if (fileType !== 'menu') {
-      const teamMember = await prisma.teamMember.findFirst({
-        where: { userId: authResult.user.id },
-        include: { team: { select: { category: true, championshipType: true, stage: true } } },
-      })
-      const t = teamMember?.team
-      if (!t) {
-        return NextResponse.json({ error: 'Team not found' }, { status: 400 })
-      }
       const dishCount = activeStageDishCount(t)
       if (dishNumber < 1 || dishNumber > dishCount) {
         return NextResponse.json(
@@ -92,19 +96,29 @@ export async function POST(request: NextRequest) {
 
     const upload = await prisma.upload.create({
       data: {
+        teamId: membership.teamId,
         userId: authResult.user.id,
         dishNumber,
         fileType,
         fileName: fileName,
         fileSize: file.size,
         status: 'pending',
-      }
+      },
     })
 
     return NextResponse.json(upload)
   } catch (error: unknown) {
     console.error('Upload file error:', error)
-    const err = error as NodeJS.ErrnoException
+    const err = error as NodeJS.ErrnoException & { code?: string }
+    if (err?.code === 'P2003') {
+      return NextResponse.json(
+        {
+          error:
+            'База данных не обновлена: выполните миграции (npx prisma migrate deploy в backend с DATABASE_URL).',
+        },
+        { status: 503 }
+      )
+    }
     if (err?.code === 'EACCES' || err?.code === 'EPERM') {
       return NextResponse.json(
         {

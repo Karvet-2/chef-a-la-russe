@@ -45,6 +45,7 @@ model Team {
   
   members    TeamMember[]
   results    Result[]
+  uploads    Upload[]
 }
 
 model TeamMember {
@@ -74,6 +75,7 @@ model Document {
 
 model Upload {
   id          String   @id @default(cuid())
+  teamId      String
   userId      String
   dishNumber  Int      // 1, 2, 3
   fileType    String   // photo, techCard, menu
@@ -82,9 +84,10 @@ model Upload {
   status      String   @default("pending")
   createdAt   DateTime @default(now())
   
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([userId, dishNumber])
+  @@index([teamId, dishNumber])
 }
 
 model Result {
