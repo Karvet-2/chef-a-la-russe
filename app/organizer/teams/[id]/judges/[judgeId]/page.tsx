@@ -262,6 +262,22 @@ export default function JudgeDetailsPage() {
     return Math.max(0, Math.min(max, parsed))
   }
 
+  const updateCriterionScore = (
+    criterionKey: CriterionKey,
+    dishNumber: number,
+    max: number,
+    nextValue: number
+  ) => {
+    const value = Math.max(0, Math.min(max, nextValue))
+    setFormData(prev => ({
+      ...prev,
+      [criterionKey]: {
+        ...prev[criterionKey],
+        [dishNumber]: value,
+      },
+    }))
+  }
+
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -380,7 +396,20 @@ export default function JudgeDetailsPage() {
                           </td>
                           {dishNumbers.map((dishNumber) => (
                             <td key={dishNumber} className="px-2 py-3 sm:px-6 sm:py-4 text-center border-b-0 align-middle">
-                              <div className="flex items-center justify-center gap-0.5 sm:gap-1">
+                              <div className="flex items-center justify-center gap-1 sm:gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isFixed || !canEdit) return
+                                    const current = formData[criterion.key][dishNumber] || 0
+                                    updateCriterionScore(criterion.key, dishNumber, criterion.max, current - 1)
+                                  }}
+                                  disabled={isFixed || !canEdit}
+                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg border border-[#E9EEF4] bg-[#F8FAFC] text-sm font-semibold text-black disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                                  aria-label="Уменьшить балл"
+                                >
+                                  -
+                                </button>
                                 <input
                                   type="text"
                                   inputMode="decimal"
@@ -389,17 +418,24 @@ export default function JudgeDetailsPage() {
                                   onChange={(e) => {
                                     if (isFixed || !canEdit) return
                                     const value = normalizeScoreInput(e.target.value, criterion.max)
-                                    setFormData(prev => ({
-                                      ...prev,
-                                      [criterion.key]: {
-                                        ...prev[criterion.key],
-                                        [dishNumber]: value
-                                      }
-                                    }))
+                                    updateCriterionScore(criterion.key, dishNumber, criterion.max, value)
                                   }}
                                   disabled={isFixed || !canEdit}
                                   className="w-[3.25rem] sm:w-16 min-h-[44px] sm:min-h-0 px-1.5 sm:px-3 py-2 border border-[#E9EEF4] rounded-lg text-sm text-center disabled:bg-gray-100 disabled:cursor-not-allowed bg-white touch-manipulation"
                                 />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (isFixed || !canEdit) return
+                                    const current = formData[criterion.key][dishNumber] || 0
+                                    updateCriterionScore(criterion.key, dishNumber, criterion.max, current + 1)
+                                  }}
+                                  disabled={isFixed || !canEdit}
+                                  className="h-8 w-8 sm:h-9 sm:w-9 rounded-lg border border-[#E9EEF4] bg-[#F8FAFC] text-sm font-semibold text-black disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation"
+                                  aria-label="Увеличить балл"
+                                >
+                                  +
+                                </button>
                                 <span className="text-xs sm:text-sm text-[#71717B] tabular-nums">
                                   /{criterion.max}
                                 </span>
