@@ -275,21 +275,21 @@ export default function OrganizerTeamsPage() {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-6">
+            <div className="flex flex-col sm:flex-row gap-3 mt-6">
               <Button
                 variant="secondary"
                 onClick={() => {
                   setShowCreateModal(false)
                   setCreateFormData({ name: '', category: '', championshipType: 'adult', userIds: [] })
                 }}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Отмена
               </Button>
               <Button
                 onClick={handleCreateTeam}
                 disabled={!createFormData.name || !createFormData.category}
-                className="flex-1"
+                className="w-full sm:flex-1"
               >
                 Создать команду
               </Button>

@@ -26,19 +26,10 @@ export default function OrganizerHeader() {
   return (
     <header className="w-full bg-white/95 backdrop-blur-sm shadow-[0_1px_0_0_rgba(15,23,42,0.06)] pt-safe">
       <div className="max-w-[1440px] mx-auto px-3 sm:px-6 md:px-8 lg:px-16 xl:px-[134px] py-2.5 sm:py-4 md:py-5">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 mb-2 lg:mb-3">
+        <div className="mb-2 lg:mb-3">
           <h1 className="text-base leading-tight sm:text-xl md:text-2xl lg:text-[29.47px] font-semibold text-black text-center sm:text-left px-1 sm:px-0">
             Кабинет судьи
           </h1>
-          <Link href="/organizer" className="hidden shrink-0 justify-center sm:flex sm:justify-end" aria-label="Chef a la Russe">
-            <img
-              src="/logo.svg"
-              alt=""
-              width={240}
-              height={80}
-              className="h-14 sm:h-20 max-h-20 w-auto max-w-[240px] object-contain"
-            />
-          </Link>
         </div>
 
         <div className="flex items-center justify-between gap-2 sm:gap-3 w-full min-w-0">

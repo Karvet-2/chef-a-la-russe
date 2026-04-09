@@ -80,7 +80,7 @@ export default function OrganizerHome() {
               <div className="flex justify-center">
                 <Link
                   href="/organizer/participants"
-                  className="flex items-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13px] font-semibold transition-colors group"
+                  className="flex min-h-[44px] touch-manipulation items-center justify-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[8px] px-4 py-2.5 text-[13px] font-semibold transition-colors group text-center whitespace-normal"
                 >
                   <span>Перейти</span>
                   <svg
@@ -107,7 +107,7 @@ export default function OrganizerHome() {
               <div className="flex justify-center">
                 <Link
                   href="/organizer/participants"
-                  className="flex items-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13px] font-semibold transition-colors group"
+                  className="flex min-h-[44px] touch-manipulation items-center justify-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[8px] px-4 py-2.5 text-[13px] font-semibold transition-colors group text-center whitespace-normal"
                 >
                   <span>Перейти</span>
                   <svg
@@ -134,7 +134,7 @@ export default function OrganizerHome() {
               <div className="flex justify-center">
                 <Link
                   href="/organizer/teams"
-                  className="flex items-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[6px] px-4 py-2.5 text-[13px] font-semibold transition-colors group"
+                  className="flex min-h-[44px] touch-manipulation items-center justify-center gap-2 bg-[#F1F5F9] text-black hover:bg-[#0F172A] hover:text-white rounded-[8px] px-4 py-2.5 text-[13px] font-semibold transition-colors group text-center whitespace-normal"
                 >
                   <span>Перейти</span>
                   <svg

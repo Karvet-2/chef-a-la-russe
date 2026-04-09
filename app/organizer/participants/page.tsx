@@ -191,10 +191,10 @@ export default function OrganizerParticipantsPage() {
                             )}
                           </div>
                           {participant.status !== 'confirmed' && (
-                            <div className="flex gap-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <button
                                 onClick={() => handleConfirm(participant.id)}
-                                className="flex items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-colors bg-[#0F172A] text-white hover:bg-[#1e293b]"
+                                className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 min-h-[44px] text-xs sm:text-[13px] font-semibold transition-colors bg-[#0F172A] text-white hover:bg-[#1e293b] touch-manipulation text-center whitespace-normal"
                               >
                                 <img
                                   src="/icons/checkmark-icon.png"
@@ -207,7 +207,7 @@ export default function OrganizerParticipantsPage() {
                               </button>
                               <button
                                 onClick={() => handleReject(participant.id)}
-                                className={`flex items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold transition-colors border border-[#E9EEF4] ${
+                                className={`flex w-full sm:w-auto items-center justify-center gap-2 rounded-lg px-4 py-2.5 min-h-[44px] text-xs sm:text-[13px] font-semibold transition-colors border border-[#E9EEF4] touch-manipulation text-center whitespace-normal ${
                                   participant.status === 'rejected'
                                     ? 'bg-[#0F172A] text-white border-[#0F172A]'
                                     : 'bg-white text-black hover:bg-[#F1F5F9]'

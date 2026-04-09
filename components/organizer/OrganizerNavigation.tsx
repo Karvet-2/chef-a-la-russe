@@ -43,7 +43,7 @@ export default function OrganizerNavigation({ isMobile = false, onNavigate }: Or
               key={item.href}
               href={item.href}
               onClick={handleClick}
-              className={`flex items-center gap-3 px-4 py-3 rounded-[20px] transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-[20px] transition-colors min-h-[44px] touch-manipulation ${
                 isActive
                   ? 'bg-[#0F172A] text-white'
                   : 'bg-[#F1F5F9] text-black'
@@ -65,7 +65,7 @@ export default function OrganizerNavigation({ isMobile = false, onNavigate }: Or
               }}
               loading="eager"
             />
-              <span className="text-sm font-semibold">{item.label}</span>
+              <span className="text-sm font-semibold leading-tight break-words">{item.label}</span>
             </Link>
           )
         })}
