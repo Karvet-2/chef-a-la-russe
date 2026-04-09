@@ -254,6 +254,14 @@ export default function JudgeDetailsPage() {
     return max > 0 ? (total / max) * 100 : 0
   }
 
+  const normalizeScoreInput = (raw: string, max: number) => {
+    const normalized = raw.replace(',', '.').trim()
+    if (normalized === '') return 0
+    const parsed = Number(normalized)
+    if (!Number.isFinite(parsed)) return 0
+    return Math.max(0, Math.min(max, parsed))
+  }
+
   if (loading || dataLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -336,7 +344,7 @@ export default function JudgeDetailsPage() {
               Таблицу можно листать горизонтально
             </p>
             <div className="organizer-table-wrap border-2 shadow-none sm:shadow-sm">
-              <div className="overflow-x-auto overscroll-x-contain touch-pan-x -mx-px">
+              <div className="overflow-x-auto overscroll-x-contain -mx-px">
                 <table className="w-full min-w-[720px] sm:min-w-0">
                 <thead>
                   <tr className="bg-[#F1F5F9]">
@@ -374,14 +382,13 @@ export default function JudgeDetailsPage() {
                             <td key={dishNumber} className="px-2 py-3 sm:px-6 sm:py-4 text-center border-b-0 align-middle">
                               <div className="flex items-center justify-center gap-0.5 sm:gap-1">
                                 <input
-                                  type="number"
+                                  type="text"
                                   inputMode="decimal"
-                                  min="0"
-                                  max={criterion.max}
+                                  pattern="[0-9]*[.,]?[0-9]*"
                                   value={formData[criterion.key][dishNumber] || 0}
                                   onChange={(e) => {
                                     if (isFixed || !canEdit) return
-                                    const value = Math.max(0, Math.min(criterion.max, parseFloat(e.target.value) || 0))
+                                    const value = normalizeScoreInput(e.target.value, criterion.max)
                                     setFormData(prev => ({
                                       ...prev,
                                       [criterion.key]: {
